@@ -50,7 +50,7 @@ func realMain() error {
 		httpMiddleware = []http.Middleware{http.AuthMiddleware(authn)}
 		grpcMiddleware = grpc.AuthMiddleware(authn)
 	} else {
-		log.Println("using service wrapper for authentication")
+		log.Println("using service decorator for authentication")
 		impl = echo.NewAuthServer(impl, authn)
 	}
 
