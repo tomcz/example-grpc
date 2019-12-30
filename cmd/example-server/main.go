@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
@@ -59,21 +60,39 @@ func realMain() error {
 		return err
 	}
 
+	shutdown := func() {
+		cancel() // we're done
+		grpcSrv.GracefulStop()
+		httpSrv.GracefulStop()
+	}
+
 	group.Go(func() error { return grpcSrv.ListenAndServe() })
 	group.Go(func() error { return httpSrv.ListenAndServe() })
 
-	go waitForShutdown(func() {
-		grpcSrv.GracefulStop()
-		httpSrv.GracefulStop()
-		cancel()
-	})
-	return group.Wait()
+	waitForShutdown(group, shutdown)
+	return nil
 }
 
-func waitForShutdown(callback func()) {
+func waitForShutdown(group *errgroup.Group, shutdown func()) {
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		waitForSignal()
+		shutdown()
+		wg.Done()
+	}()
+	go func() {
+		err := group.Wait()
+		log.Println(err)
+		shutdown()
+		wg.Done()
+	}()
+	wg.Wait()
+}
+
+func waitForSignal() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChan
-	log.Println("shutting down")
-	callback()
+	log.Println("shutdown signal")
 }
