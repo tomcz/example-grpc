@@ -25,7 +25,7 @@ func main() {
 	// Fatal logging prevents defer from firing, so wrap the
 	// service configuration & startup in a realMain function.
 	if err := realMain(); err != nil {
-		log.Fatalf("application failed with %v\n", err)
+		log.Fatalf("application failed - error is: %v\n", err)
 	}
 	log.Println("application stopped")
 }

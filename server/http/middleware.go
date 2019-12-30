@@ -31,9 +31,9 @@ func AuthMiddleware(auth server.Auth) Middleware {
 			}
 			username, err := auth.Authenticate(pair[1])
 			if err != nil {
-				requestID := uuid.New().String()
-				log.Printf("auth failed: %s - %v\n", requestID, err)
-				http.Error(w, fmt.Sprintf("Authorization failed: %s", requestID), http.StatusForbidden)
+				errorID := uuid.New().String()
+				log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
+				http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
 				return
 			}
 			r = r.WithContext(server.WithUserName(r.Context(), username))
