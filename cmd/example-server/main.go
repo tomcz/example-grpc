@@ -6,11 +6,12 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/tomcz/example-grpc/server"
+	"github.com/tomcz/example-grpc/server/echo"
 	"github.com/tomcz/example-grpc/server/grpc"
 	"github.com/tomcz/example-grpc/server/http"
 )
@@ -18,6 +19,7 @@ import (
 var (
 	grpcPort = flag.Int("grpc", 8000, "gRPC listener port")
 	httpPort = flag.Int("http", 8080, "HTTP listener port")
+	tokens   = flag.String("tokens", "wibble,letmein", "valid bearer tokens")
 )
 
 func main() {
@@ -35,7 +37,7 @@ func realMain() error {
 	group, ctx := errgroup.WithContext(ctx)
 	defer cancel()
 
-	impl := server.NewExampleServer()
+	impl := echo.NewExampleServer(strings.Split(*tokens, ","))
 	grpcSrv := grpc.NewService(impl, *grpcPort)
 	httpSrv, err := http.NewService(ctx, impl, *httpPort)
 	if err != nil {
