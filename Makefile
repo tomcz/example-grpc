@@ -4,6 +4,7 @@
 
 GOPATH = $(shell go env GOPATH)
 PACKAGES = $(shell go list ./... | grep -v vendor)
+BEARER_TOKEN ?= wibble
 
 all: clean format lint compile
 
@@ -42,7 +43,8 @@ run-server: compile-server
 	./target/example-server
 
 run-grpc-client: compile-client
-	./target/example-client
+	./target/example-client -token ${BEARER_TOKEN}
 
 run-http-client:
-	curl -s -H 'Content-Type: application/json' -d '{"message": "hello"}' http://localhost:8080/v1/example/echo | jq '.'
+	curl -s -H 'Content-Type: application/json' -H 'Authorization: Bearer ${BEARER_TOKEN}' \
+		-d '{"message": "hello"}' http://localhost:8080/v1/example/echo | jq '.'
