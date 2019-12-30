@@ -1,0 +1,24 @@
+syntax = "proto3";
+package example.service;
+option go_package = "api";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service Example {
+    rpc Echo (EchoRequest) returns (EchoResponse) {
+        option (google.api.http) = {
+            post: "/v1/example/echo"
+            body: "*"
+        };
+    }
+}
+
+message EchoRequest {
+    string message = 1;
+}
+
+message EchoResponse {
+    string message = 1;
+    google.protobuf.Timestamp created_at = 2;
+}
