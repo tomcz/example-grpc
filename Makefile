@@ -42,6 +42,9 @@ compile-client: target
 run-server: compile-server
 	./target/example-server
 
+run-server-mw: compile-server
+	./target/example-server -middleware
+
 run-grpc-client: compile-client
 	./target/example-client -token ${BEARER_TOKEN}
 

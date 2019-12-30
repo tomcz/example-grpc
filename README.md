@@ -4,9 +4,11 @@ Example of an authenticated gRPC & grpc-gateway server. Also includes an authent
 
 `make run-server` runs a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
 
+`make run-server-mw` does exactly the same, the difference being this server uses HTTP & gRPC middleware for authentication rather than simple service delegation.
+
 `make run-grpc-client` runs a gRPC client that sends a request to the server, using bearer token authentication.
 
-`make run-http-client` invokes curl to do exactly the same to the HTTP server.
+`make run-http-client` invokes curl to do exactly the same to the HTTP server endpoint.
 
 ## Setting up
 

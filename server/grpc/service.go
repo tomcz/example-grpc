@@ -17,8 +17,8 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int) server.Service {
-	srv := grpc.NewServer()
+func NewService(impl api.ExampleServer, port int, opts ...grpc.ServerOption) server.Service {
+	srv := grpc.NewServer(opts...)
 	api.RegisterExampleServer(srv, impl)
 	return &service{
 		server: srv,

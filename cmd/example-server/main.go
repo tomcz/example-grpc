@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"golang.org/x/sync/errgroup"
+	rpc "google.golang.org/grpc"
 
 	"github.com/tomcz/example-grpc/server/auth"
 	"github.com/tomcz/example-grpc/server/echo"
@@ -17,9 +18,10 @@ import (
 )
 
 var (
-	grpcPort = flag.Int("grpc", 8000, "gRPC listener port")
-	httpPort = flag.Int("http", 8080, "HTTP listener port")
-	tokens   = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
+	grpcPort   = flag.Int("grpc", 8000, "gRPC listener port")
+	httpPort   = flag.Int("http", 8080, "HTTP listener port")
+	tokens     = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
+	middleware = flag.Bool("middleware", false, "apply authentiation middleware")
 )
 
 func main() {
@@ -37,9 +39,22 @@ func realMain() error {
 	group, ctx := errgroup.WithContext(ctx)
 	defer cancel()
 
-	impl := echo.NewAuthServer(echo.NewPlainServer(), auth.NewBearerAuth(*tokens))
-	grpcSrv := grpc.NewService(impl, *grpcPort)
-	httpSrv, err := http.NewService(ctx, impl, *httpPort)
+	impl := echo.NewExampleServer()
+	authn := auth.NewBearerAuth(*tokens)
+
+	var httpMiddleware []http.Middleware
+	var grpcMiddleware []rpc.ServerOption
+	if *middleware {
+		log.Println("using HTTP & gRPC middleware for authentication")
+		httpMiddleware = []http.Middleware{http.AuthMiddleware(authn)}
+		grpcMiddleware = grpc.AuthMiddleware(authn)
+	} else {
+		log.Println("using service wrapper for authentication")
+		impl = echo.NewAuthServer(impl, authn)
+	}
+
+	grpcSrv := grpc.NewService(impl, *grpcPort, grpcMiddleware...)
+	httpSrv, err := http.NewService(ctx, impl, *httpPort, httpMiddleware...)
 	if err != nil {
 		return err
 	}

@@ -12,8 +12,8 @@ import (
 
 type plainServer struct{}
 
-// NewPlainServer constructor
-func NewPlainServer() api.ExampleServer {
+// NewExampleServer vanilla server
+func NewExampleServer() api.ExampleServer {
 	return &plainServer{}
 }
 

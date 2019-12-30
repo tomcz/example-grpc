@@ -3,6 +3,12 @@ package server
 import (
 	"context"
 	"errors"
+	"log"
+
+	"github.com/google/uuid"
+	authn "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // ErrInvalidToken authentication failure
@@ -31,4 +37,21 @@ func UserName(ctx context.Context) string {
 		return username
 	}
 	return ""
+}
+
+// NewAuthFunc adapts Auth as gRPC middleware
+func NewAuthFunc(auth Auth) authn.AuthFunc {
+	return func(ctx context.Context) (context.Context, error) {
+		token, err := authn.AuthFromMD(ctx, auth.Scheme())
+		if err != nil {
+			return nil, err
+		}
+		username, err := auth.Authenticate(token)
+		if err != nil {
+			requestID := uuid.New().String()
+			log.Printf("auth failed: %s - %+v\n", requestID, err)
+			return nil, status.Error(codes.PermissionDenied, requestID)
+		}
+		return WithUserName(ctx, username), nil
+	}
 }
