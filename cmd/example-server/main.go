@@ -66,18 +66,18 @@ func realMain() error {
 		httpSrv.GracefulStop()
 	}
 
-	group.Go(func() error { return grpcSrv.ListenAndServe() })
-	group.Go(func() error { return httpSrv.ListenAndServe() })
+	group.Go(grpcSrv.ListenAndServe)
+	group.Go(httpSrv.ListenAndServe)
 
-	waitForShutdown(group, shutdown)
+	waitForShutdown(ctx, group, shutdown)
 	return nil
 }
 
-func waitForShutdown(group *errgroup.Group, shutdown func()) {
+func waitForShutdown(ctx context.Context, group *errgroup.Group, shutdown func()) {
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go func() {
-		waitForSignal()
+		waitForSignal(ctx)
 		shutdown()
 		wg.Done()
 	}()
@@ -90,9 +90,15 @@ func waitForShutdown(group *errgroup.Group, shutdown func()) {
 	wg.Wait()
 }
 
-func waitForSignal() {
+func waitForSignal(ctx context.Context) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	<-signalChan
-	log.Println("shutdown signal")
+	select {
+	case <-signalChan:
+		log.Println("shutdown received")
+		return
+	case <-ctx.Done():
+		log.Println("context cancelled")
+		return
+	}
 }
