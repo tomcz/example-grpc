@@ -15,7 +15,8 @@ target:
 	mkdir target
 
 format:
-	goimports -w -local github.com/tomcz/example-grpc .
+	@echo "Running goimports ..."
+	@goimports -w -local github.com/tomcz/example-grpc $(shell find . -type f -name '*.go' | grep -v '/vendor/')
 
 lint:
 	@echo "Running govet ..."
