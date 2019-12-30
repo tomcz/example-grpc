@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/google/uuid"
 	authn "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	"github.com/pborman/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -48,7 +48,7 @@ func NewAuthFunc(auth Auth) authn.AuthFunc {
 		}
 		username, err := auth.Authenticate(token)
 		if err != nil {
-			errorID := uuid.New().String()
+			errorID := uuid.New()
 			log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
 			return nil, status.Error(codes.PermissionDenied, errorID)
 		}

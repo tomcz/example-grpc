@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/pborman/uuid"
 
 	"github.com/tomcz/example-grpc/server"
 )
@@ -31,7 +31,7 @@ func AuthMiddleware(auth server.Auth) Middleware {
 			}
 			username, err := auth.Authenticate(pair[1])
 			if err != nil {
-				errorID := uuid.New().String()
+				errorID := uuid.New()
 				log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
 				http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
 				return
