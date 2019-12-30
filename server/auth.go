@@ -49,7 +49,7 @@ func NewAuthFunc(auth Auth) authn.AuthFunc {
 		username, err := auth.Authenticate(token)
 		if err != nil {
 			requestID := uuid.New().String()
-			log.Printf("auth failed: %s - %+v\n", requestID, err)
+			log.Printf("auth failed: %s - %v\n", requestID, err)
 			return nil, status.Error(codes.PermissionDenied, requestID)
 		}
 		return WithUserName(ctx, username), nil

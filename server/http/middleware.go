@@ -32,7 +32,7 @@ func AuthMiddleware(auth server.Auth) Middleware {
 			username, err := auth.Authenticate(pair[1])
 			if err != nil {
 				requestID := uuid.New().String()
-				log.Printf("auth failed: %s - %+v\n", requestID, err)
+				log.Printf("auth failed: %s - %v\n", requestID, err)
 				http.Error(w, fmt.Sprintf("Authorization failed: %s", requestID), http.StatusForbidden)
 				return
 			}
