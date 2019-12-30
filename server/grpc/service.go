@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -32,8 +33,14 @@ func (s *service) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	defer lis.Close()
-	return s.server.Serve(lis)
+	if err := s.server.Serve(lis); err != nil {
+		return err
+	}
+	// server will return a nil error when GracefulStop
+	// is called, but we cannot have a silent exit here
+	// since we use errgroups, and it requires non-nil
+	// errors to cancel the group, otherwise it hangs
+	return errors.New("gRPC server stopped")
 }
 
 func (s *service) GracefulStop() {
