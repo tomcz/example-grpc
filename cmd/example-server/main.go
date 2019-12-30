@@ -22,7 +22,7 @@ var (
 	grpcPort   = flag.Int("grpc", 8000, "gRPC listener port")
 	httpPort   = flag.Int("http", 8080, "HTTP listener port")
 	tokens     = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
-	middleware = flag.Bool("middleware", false, "apply authentiation middleware")
+	middleware = flag.Bool("middleware", false, "apply authentication middleware")
 )
 
 func main() {
