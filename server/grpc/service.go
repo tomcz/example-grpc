@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
@@ -18,9 +19,12 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int, opts ...grpc.ServerOption) server.Service {
+func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...grpc.ServerOption) server.Service {
 	srv := grpc.NewServer(opts...)
 	api.RegisterExampleServer(srv, impl)
+	if allowReflection {
+		reflection.Register(srv)
+	}
 	return &service{
 		server: srv,
 		port:   port,

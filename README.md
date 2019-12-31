@@ -2,21 +2,30 @@
 
 Example of an authenticated gRPC & grpc-gateway server, with an authenticated gRPC client for testing.
 
-`make run-server` runs a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
+## Setting up
 
-`make run-server-mw` does exactly the same, the difference being this server uses HTTP & gRPC middleware for authentication rather than service decoration.
+1. Install Go 1.13 from https://golang.org/
+2. Run `make compile` to compile the server & client code.
+
+## Running the server
+
+All the following `make` invocations run a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
+
+`make run-server` uses service decoration for HTTP & gRPC authentication.
+
+`make run-server-mw` uses HTTP & gRPC middleware for authentication.
+
+`make run-server-ref` also enables [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to make it easier to test & introspect gRPC APIs.
+
+## Running the clients
 
 `make run-client` runs a gRPC client that sends a request to the server, using bearer token authentication.
 
 `make run-curl` invokes curl to do exactly the same to the HTTP server endpoint.
 
-`make run-grpcurl` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send an authenticated request to the gRPC server endpoint.
+`make run-grpcurl` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send an authenticated request to the gRPC server endpoint. This target uses `.proto` source files to understand the RPC schema used for requests & responses.
 
-
-## Setting up
-
-1. Install Go 1.13 from https://golang.org/
-2. Run `make compile` to compile the server & client code.
+`make run-grpcurl-ref` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send an authenticated request to the gRPC server endpoint. This target uses [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to understand the RPC schema used for requests & responses.
 
 ## Compiling service.proto
 

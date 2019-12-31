@@ -46,6 +46,9 @@ run-server: compile-server
 run-server-mw: compile-server
 	./target/example-server -middleware
 
+run-server-ref: compile-server
+	./target/example-server -reflection
+
 run-client: compile-client
 	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
 
@@ -54,6 +57,12 @@ run-curl:
 		-d '{"message": "hello"}' http://localhost:8080/v1/example/echo | jq '.'
 
 run-grpcurl:
-	grpcurl -plaintext -import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-		-import-path ./api -proto api/service.proto -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+	grpcurl -plaintext -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+		-import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+		-import-path ./api \
+		-proto api/service.proto  \
+		localhost:8000 example.service.Example/Echo
+
+run-grpcurl-ref:
+	grpcurl -plaintext -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
 		localhost:8000 example.service.Example/Echo

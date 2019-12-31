@@ -23,6 +23,7 @@ var (
 	httpPort   = flag.Int("http", 8080, "HTTP listener port")
 	tokens     = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
 	middleware = flag.Bool("middleware", false, "apply authentication middleware")
+	reflection = flag.Bool("reflection", false, "enable server reflection API")
 )
 
 func main() {
@@ -54,7 +55,7 @@ func realMain() error {
 		impl = echo.NewAuthServer(impl, authn)
 	}
 
-	grpcSrv := grpc.NewService(impl, *grpcPort, grpcMiddleware...)
+	grpcSrv := grpc.NewService(impl, *grpcPort, *reflection, grpcMiddleware...)
 	httpSrv, err := http.NewService(ctx, impl, *httpPort, httpMiddleware...)
 	if err != nil {
 		return err
