@@ -27,7 +27,7 @@ All the following `make` targets send an authenticated request to the server.
 
 `make run-grpcurl` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send a request to the gRPC server. This target uses `.proto` source files to understand the RPC schema used for requests & responses.
 
-`make run-grpcurl-ref` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send a request to the gRPC server. This target uses [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to understand the RPC schema used for requests & responses.
+`make run-grpcurl-ref` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send a request to the gRPC server. This target uses [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to understand the RPC schema used for requests & responses, and as such will only work with `make run-server-ref`.
 
 ## Compiling service.proto
 
