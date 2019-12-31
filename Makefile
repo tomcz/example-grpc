@@ -64,5 +64,5 @@ run-grpcurl:
 		localhost:8000 example.service.Example/Echo
 
 run-grpcurl-ref:
-	grpcurl -plaintext -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+	grpcurl -plaintext -d '{"message":"hola"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
 		localhost:8000 example.service.Example/Echo
