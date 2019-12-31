@@ -1,6 +1,6 @@
 .PHONY: all clean format lint genproto
 .PHONY: compile compile-server compile-client
-.PHONY: run-server run-grpc-client run-http-client
+.PHONY: run-server run-client run-curl run-grpcurl
 
 GOPATH = $(shell go env GOPATH)
 PACKAGES = $(shell go list ./... | grep -v vendor)
@@ -46,9 +46,14 @@ run-server: compile-server
 run-server-mw: compile-server
 	./target/example-server -middleware
 
-run-grpc-client: compile-client
-	./target/example-client -token ${BEARER_TOKEN}
+run-client: compile-client
+	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
 
-run-http-client:
+run-curl:
 	curl -s -H 'Content-Type: application/json' -H 'Authorization: Bearer ${BEARER_TOKEN}' \
 		-d '{"message": "hello"}' http://localhost:8080/v1/example/echo | jq '.'
+
+run-grpcurl:
+	grpcurl -plaintext -import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
+		-import-path ./api -proto api/service.proto -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+		localhost:8000 example.service.Example/Echo
