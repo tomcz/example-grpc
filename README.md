@@ -1,6 +1,6 @@
 # example-grpc
 
-Example of an authenticated gRPC & grpc-gateway server. Also includes an authenticated gRPC client for testing.
+Example of an authenticated gRPC & grpc-gateway server, with an authenticated gRPC client for testing.
 
 `make run-server` runs a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
 
