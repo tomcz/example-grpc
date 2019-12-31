@@ -9,7 +9,7 @@ Example of an authenticated gRPC & grpc-gateway server, with an authenticated gR
 
 ## Running the server
 
-All the following `make` invocations run a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
+All the following `make` targets run a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication.
 
 `make run-server` uses service decoration for HTTP & gRPC authentication.
 
@@ -19,13 +19,15 @@ All the following `make` invocations run a gRPC server on port 8000, and a HTTP 
 
 ## Running the clients
 
-`make run-client` runs a gRPC client that sends a request to the server, using bearer token authentication.
+All the following `make` targets send an authenticated request to the server.
 
-`make run-curl` invokes curl to do exactly the same to the HTTP server endpoint.
+`make run-client` runs a gRPC client that sends a request to the gRPC server.
 
-`make run-grpcurl` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send an authenticated request to the gRPC server endpoint. This target uses `.proto` source files to understand the RPC schema used for requests & responses.
+`make run-curl` invokes curl to send a request to the HTTP server.
 
-`make run-grpcurl-ref` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send an authenticated request to the gRPC server endpoint. This target uses [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to understand the RPC schema used for requests & responses.
+`make run-grpcurl` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send a request to the gRPC server. This target uses `.proto` source files to understand the RPC schema used for requests & responses.
+
+`make run-grpcurl-ref` uses [grpcurl](https://github.com/fullstorydev/grpcurl) to send a request to the gRPC server. This target uses [gRPC server reflection](https://github.com/grpc/grpc-go/blob/master/Documentation/server-reflection-tutorial.md) to understand the RPC schema used for requests & responses.
 
 ## Compiling service.proto
 
