@@ -1,6 +1,6 @@
 # example-grpc
 
-Example of an authenticated gRPC & grpc-gateway server, with an authenticated gRPC client for testing.
+Example of an authenticated gRPC & grpc-gateway server, and various client connection examples.
 
 ## Setting up
 
