@@ -75,16 +75,17 @@ func realMain() error {
 
 func waitForShutdown(ctx context.Context, group *errgroup.Group, shutdown func()) {
 	var wg sync.WaitGroup
+	var once sync.Once
 	wg.Add(2)
 	go func() {
 		waitForSignal(ctx)
-		shutdown()
+		once.Do(shutdown)
 		wg.Done()
 	}()
 	go func() {
 		err := group.Wait()
 		log.Println(err)
-		shutdown()
+		once.Do(shutdown)
 		wg.Done()
 	}()
 	wg.Wait()
