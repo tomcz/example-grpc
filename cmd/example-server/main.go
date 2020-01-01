@@ -4,12 +4,7 @@ import (
 	"context"
 	"flag"
 	"log"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
 
-	"golang.org/x/sync/errgroup"
 	rpc "google.golang.org/grpc"
 
 	"github.com/tomcz/example-grpc/server/auth"
@@ -38,7 +33,6 @@ func main() {
 
 func realMain() error {
 	ctx, cancel := context.WithCancel(context.Background())
-	group, ctx := errgroup.WithContext(ctx)
 	defer cancel()
 
 	impl := echo.NewExampleServer()
@@ -62,45 +56,14 @@ func realMain() error {
 	}
 
 	shutdown := func() {
-		cancel() // we're done
+		cancel()
 		grpcSrv.GracefulStop()
 		httpSrv.GracefulStop()
 	}
-
-	group.Go(grpcSrv.ListenAndServe)
-	group.Go(httpSrv.ListenAndServe)
-
-	waitForShutdown(ctx, group, shutdown)
+	waitForExit(shutdown,
+		func() error { return grpcSrv.ListenAndServe() },
+		func() error { return httpSrv.ListenAndServe() },
+		func() error { return waitForSignal(ctx) },
+	)
 	return nil
-}
-
-func waitForShutdown(ctx context.Context, group *errgroup.Group, shutdown func()) {
-	var wg sync.WaitGroup
-	var once sync.Once
-	wg.Add(2)
-	go func() {
-		waitForSignal(ctx)
-		once.Do(shutdown)
-		wg.Done()
-	}()
-	go func() {
-		err := group.Wait()
-		log.Println(err)
-		once.Do(shutdown)
-		wg.Done()
-	}()
-	wg.Wait()
-}
-
-func waitForSignal(ctx context.Context) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	select {
-	case <-signalChan:
-		log.Println("shutdown received")
-		return
-	case <-ctx.Done():
-		log.Println("context cancelled")
-		return
-	}
 }
