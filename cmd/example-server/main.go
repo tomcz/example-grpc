@@ -42,7 +42,7 @@ func realMain() error {
 	var grpcMiddleware []rpc.ServerOption
 	if *middleware {
 		log.Println("using HTTP & gRPC middleware for authentication")
-		httpMiddleware = []http.Middleware{http.AuthMiddleware(authn)}
+		httpMiddleware = http.AuthMiddleware(authn)
 		grpcMiddleware = grpc.AuthMiddleware(authn)
 	} else {
 		log.Println("using service decorator for authentication")
