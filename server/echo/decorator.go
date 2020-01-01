@@ -9,21 +9,21 @@ import (
 	"github.com/tomcz/example-grpc/server"
 )
 
-type authServer struct {
+type authDecorator struct {
 	delegate api.ExampleServer
 	authFunc auth.AuthFunc
 }
 
-// NewAuthServer applies authentication to every request
+// NewAuthDecorator applies authentication to every request
 // and only delegates successfully authenticated requests.
-func NewAuthServer(delegate api.ExampleServer, authn server.Auth) api.ExampleServer {
-	return &authServer{
+func NewAuthDecorator(delegate api.ExampleServer, authn server.Auth) api.ExampleServer {
+	return &authDecorator{
 		delegate: delegate,
 		authFunc: server.NewAuthFunc(authn),
 	}
 }
 
-func (s *authServer) Echo(ctx context.Context, in *api.EchoRequest) (*api.EchoResponse, error) {
+func (s *authDecorator) Echo(ctx context.Context, in *api.EchoRequest) (*api.EchoResponse, error) {
 	authCtx, err := s.authFunc(ctx)
 	if err != nil {
 		return nil, err
