@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sync"
 	"syscall"
 )
@@ -32,7 +33,7 @@ func waitForExit(shutdown func(), runList ...action) {
 func handlePanic(runThis action) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("panic: %v", r)
+			err = fmt.Errorf("panic: %v, stack: %s", r, string(debug.Stack()))
 		}
 	}()
 	return runThis()
