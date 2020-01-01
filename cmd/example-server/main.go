@@ -61,9 +61,9 @@ func realMain() error {
 		httpSrv.GracefulStop()
 	}
 	waitForExit(shutdown,
-		func() error { return grpcSrv.ListenAndServe() },
-		func() error { return httpSrv.ListenAndServe() },
-		func() error { return waitForSignal(ctx) },
+		grpcSrv.ListenAndServe,
+		httpSrv.ListenAndServe,
+		waitForSignalAction(ctx),
 	)
 	return nil
 }

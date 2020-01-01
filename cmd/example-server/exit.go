@@ -39,6 +39,12 @@ func handlePanic(runThis action) (err error) {
 	return runThis()
 }
 
+func waitForSignalAction(ctx context.Context) action {
+	return func() error {
+		return waitForSignal(ctx)
+	}
+}
+
 func waitForSignal(ctx context.Context) error {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
