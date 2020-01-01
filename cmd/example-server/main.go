@@ -46,7 +46,7 @@ func realMain() error {
 		grpcMiddleware = grpc.AuthMiddleware(authn)
 	} else {
 		log.Println("using service decorator for authentication")
-		impl = echo.NewAuthDecorator(impl, authn)
+		impl = auth.NewAuthDecorator(impl, authn)
 	}
 
 	grpcSrv := grpc.NewService(impl, *grpcPort, *reflection, grpcMiddleware...)
