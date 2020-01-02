@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/pkg/errors"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
@@ -30,7 +29,7 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, middlewar
 	httpMux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaller))
 	err := api.RegisterExampleHandlerServer(ctx, httpMux, impl)
 	if err != nil {
-		return nil, errors.Wrap(err, "grpc-gateway registration failed")
+		return nil, fmt.Errorf("grpc-gateway registration failed: %w", err)
 	}
 	// NOTE: grpc-gateway does not play nice with anything other than JSON request bodies but
 	// it does not check that the Content-Type is actually JSON, so let's enforce that a bit.

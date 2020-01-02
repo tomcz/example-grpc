@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
@@ -33,7 +32,7 @@ func main() {
 func realMain() error {
 	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
 	if err != nil {
-		return errors.Wrap(err, "failed to dial")
+		return fmt.Errorf("failed to dial: %w", err)
 	}
 	defer conn.Close()
 
@@ -43,7 +42,7 @@ func realMain() error {
 	client := api.NewExampleClient(conn)
 	res, err := client.Echo(ctx, &api.EchoRequest{Message: *msg})
 	if err != nil {
-		return errors.Wrap(err, "echo request failed")
+		return fmt.Errorf("echo request failed: %w", err)
 	}
 	marshaller := &jsonpb.Marshaler{
 		EmitDefaults: true,
@@ -52,7 +51,7 @@ func realMain() error {
 	}
 	txt, err := marshaller.MarshalToString(res)
 	if err != nil {
-		return errors.Wrap(err, "response marshalling failed")
+		return fmt.Errorf("response marshalling failed: %w", err)
 	}
 	fmt.Println(txt)
 	return nil
