@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/tomcz/example-grpc/api"
@@ -19,7 +20,12 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...grpc.ServerOption) server.Service {
+func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...grpc.ServerOption) (server.Service, error) {
+	tc, err := credentials.NewServerTLSFromFile("pki/server.crt", "pki/server.key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TLS credentials: %w", err)
+	}
+	opts = append(opts, grpc.Creds(tc))
 	srv := grpc.NewServer(opts...)
 	api.RegisterExampleServer(srv, impl)
 	if allowReflection {
@@ -28,7 +34,7 @@ func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...
 	return &service{
 		server: srv,
 		port:   port,
-	}
+	}, nil
 }
 
 func (s *service) ListenAndServe() error {

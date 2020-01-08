@@ -53,16 +53,19 @@ run-client: compile-client
 	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
 
 run-curl:
-	curl -s -H 'Content-Type: application/json' -H 'Authorization: Bearer ${BEARER_TOKEN}' \
-		-d '{"message": "hello"}' http://localhost:8080/v1/example/echo | jq '.'
+	curl --silent --show-error --fail --insecure  \
+		-H 'Content-Type: application/json' -H 'Authorization: Bearer ${BEARER_TOKEN}' \
+		-d '{"message": "hello"}' https://localhost:8080/v1/example/echo | jq '.'
 
 run-grpcurl:
-	grpcurl -plaintext -d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+	grpcurl -cacert pki/ca.crt -servername server.example.com \
+		-d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
 		-import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 		-import-path ./api \
 		-proto api/service.proto  \
 		localhost:8000 example.service.Example/Echo
 
 run-grpcurl-ref:
-	grpcurl -plaintext -d '{"message":"hola"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+	grpcurl -cacert pki/ca.crt -servername server.example.com \
+		-d '{"message":"hola"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
 		localhost:8000 example.service.Example/Echo

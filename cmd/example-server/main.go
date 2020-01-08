@@ -49,7 +49,10 @@ func realMain() error {
 		impl = auth.NewAuthDecorator(impl, authn)
 	}
 
-	grpcSrv := grpc.NewService(impl, *grpcPort, *reflection, grpcMiddleware...)
+	grpcSrv, err := grpc.NewService(impl, *grpcPort, *reflection, grpcMiddleware...)
+	if err != nil {
+		return err
+	}
 	httpSrv, err := http.NewService(ctx, impl, *httpPort, httpMiddleware...)
 	if err != nil {
 		return err

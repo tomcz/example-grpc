@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/protobuf/jsonpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/tomcz/example-grpc/api"
@@ -30,7 +31,11 @@ func main() {
 }
 
 func realMain() error {
-	conn, err := grpc.Dial(*addr, grpc.WithInsecure())
+	tc, err := credentials.NewClientTLSFromFile("pki/ca.crt", "server.example.com")
+	if err != nil {
+		return fmt.Errorf("failed to create TLS credentials: %w", err)
+	}
+	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(tc))
 	if err != nil {
 		return fmt.Errorf("failed to dial: %w", err)
 	}

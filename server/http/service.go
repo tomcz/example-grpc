@@ -50,7 +50,7 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, middlewar
 
 func (s *service) ListenAndServe() error {
 	log.Println("staring HTTP server on port", s.port)
-	return s.server.ListenAndServe()
+	return s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
 }
 
 func (s *service) GracefulStop() {
