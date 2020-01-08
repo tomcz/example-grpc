@@ -19,6 +19,7 @@ var (
 	tokens     = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
 	middleware = flag.Bool("middleware", false, "apply authentication middleware")
 	reflection = flag.Bool("reflection", false, "enable server reflection API")
+	mtls       = flag.Bool("mtls", false, "enable mTLS between server & clients")
 )
 
 func main() {
@@ -49,11 +50,11 @@ func realMain() error {
 		impl = auth.NewAuthDecorator(impl, authn)
 	}
 
-	grpcSrv, err := grpc.NewService(impl, *grpcPort, *reflection, grpcMiddleware...)
+	grpcSrv, err := grpc.NewService(impl, *grpcPort, *reflection, *mtls, grpcMiddleware...)
 	if err != nil {
 		return err
 	}
-	httpSrv, err := http.NewService(ctx, impl, *httpPort, httpMiddleware...)
+	httpSrv, err := http.NewService(ctx, impl, *httpPort, *mtls, httpMiddleware...)
 	if err != nil {
 		return err
 	}

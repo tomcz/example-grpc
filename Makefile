@@ -43,6 +43,9 @@ compile-client: target
 run-server: compile-server
 	./target/example-server
 
+run-server-mtls: compile-server
+	./target/example-server -mtls
+
 run-server-mw: compile-server
 	./target/example-server -middleware
 
@@ -51,6 +54,12 @@ run-server-ref: compile-server
 
 run-client: compile-client
 	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
+
+run-client-alice: compile-client
+	./target/example-client -alice -msg "Tea?"
+
+run-client-bob: compile-client
+	./target/example-client -bob -msg "Coffee?"
 
 run-curl:
 	curl --silent --show-error --fail --insecure  \

@@ -7,6 +7,8 @@ import (
 	authn "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/pborman/uuid"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -24,5 +26,24 @@ func NewAuthFunc(auth Auth) authn.AuthFunc {
 			return nil, status.Error(codes.PermissionDenied, errorID)
 		}
 		return WithUserName(ctx, username), nil
+	}
+}
+
+// NewMTLSAuthFunc allows for optional client authentication via mTLS
+func NewMTLSAuthFunc(next authn.AuthFunc) authn.AuthFunc {
+	return func(ctx context.Context) (context.Context, error) {
+		if p, ok := peer.FromContext(ctx); ok {
+			if tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo); ok {
+				certs := tlsInfo.State.PeerCertificates
+				if len(certs) > 0 {
+					dnsNames := certs[0].DNSNames
+					if len(dnsNames) > 0 {
+						username := dnsNames[0]
+						return WithUserName(ctx, username), nil
+					}
+				}
+			}
+		}
+		return next(ctx)
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 // AuthMiddleware optional authentication middleware
 func AuthMiddleware(authn server.Auth) []grpc.ServerOption {
-	authFunc := server.NewAuthFunc(authn)
+	authFunc := server.NewMTLSAuthFunc(server.NewAuthFunc(authn))
 	return []grpc.ServerOption{
 		grpc.UnaryInterceptor(auth.UnaryServerInterceptor(authFunc)),
 		grpc.StreamInterceptor(auth.StreamServerInterceptor(authFunc)),

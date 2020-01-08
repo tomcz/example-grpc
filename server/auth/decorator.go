@@ -19,7 +19,7 @@ type authDecorator struct {
 func NewAuthDecorator(delegate api.ExampleServer, authn server.Auth) api.ExampleServer {
 	return &authDecorator{
 		delegate: delegate,
-		authFunc: server.NewAuthFunc(authn),
+		authFunc: server.NewMTLSAuthFunc(server.NewAuthFunc(authn)),
 	}
 }
 

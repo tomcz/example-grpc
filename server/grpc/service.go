@@ -1,8 +1,11 @@
 package grpc
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 
@@ -20,10 +23,10 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...grpc.ServerOption) (server.Service, error) {
-	tc, err := credentials.NewServerTLSFromFile("pki/server.crt", "pki/server.key")
+func NewService(impl api.ExampleServer, port int, allowReflection bool, allowMtls bool, opts ...grpc.ServerOption) (server.Service, error) {
+	tc, err := newTransportCredentials(allowMtls)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create TLS credentials: %w", err)
+		return nil, err
 	}
 	opts = append(opts, grpc.Creds(tc))
 	srv := grpc.NewServer(opts...)
@@ -35,6 +38,37 @@ func NewService(impl api.ExampleServer, port int, allowReflection bool, opts ...
 		server: srv,
 		port:   port,
 	}, nil
+}
+
+func newTransportCredentials(allowMtls bool) (credentials.TransportCredentials, error) {
+	if allowMtls {
+		return newMTLSTransportCredentials()
+	}
+	return credentials.NewServerTLSFromFile("pki/server.crt", "pki/server.key")
+}
+
+func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
+	caCert, err := ioutil.ReadFile("pki/ca.crt")
+	if err != nil {
+		return nil, fmt.Errorf("cannot read root CA cert: %w", err)
+	}
+	caCertPool := x509.NewCertPool()
+	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
+		return nil, fmt.Errorf("failed to add root CA cert into cert pool")
+	}
+	cert, err := tls.LoadX509KeyPair("pki/server.crt", "pki/server.key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load cert & key files: %w", err)
+	}
+	// if we wanted to make mTLS mandatory we should
+	// set ClientAuth to tls.RequireAndVerifyClientCert
+	cfg := &tls.Config{
+		ClientAuth:   tls.VerifyClientCertIfGiven,
+		ClientCAs:    caCertPool,
+		Certificates: []tls.Certificate{cert},
+	}
+	cfg.BuildNameToCertificate()
+	return credentials.NewTLS(cfg), nil
 }
 
 func (s *service) ListenAndServe() error {
