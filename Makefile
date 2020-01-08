@@ -1,10 +1,8 @@
 .PHONY: all clean format lint genproto
 .PHONY: compile compile-server compile-client
-.PHONY: run-server run-client run-curl run-grpcurl
 
 GOPATH = $(shell go env GOPATH)
 PACKAGES = $(shell go list ./... | grep -v vendor)
-BEARER_TOKEN ?= wibble
 
 all: clean format lint compile
 
@@ -40,6 +38,12 @@ compile-server: target
 compile-client: target
 	go build -o target/example-client ./cmd/example-client/...
 
+test-clients: run-client-tests run-curl-tests run-grpcurl-tests
+
+# ========================================================================================
+# Server variants
+# ========================================================================================
+
 run-server: compile-server
 	./target/example-server
 
@@ -52,8 +56,15 @@ run-server-mw: compile-server
 run-server-ref: compile-server
 	./target/example-server -reflection -mtls
 
+run-server-test: compile-server
+	./target/example-server -middleware -reflection -mtls
+
+# ========================================================================================
+# Custom gRPC client
+# ========================================================================================
+
 run-client: compile-client
-	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
+	./target/example-client -token wibble -msg "G'day"
 
 run-client-alice: compile-client
 	./target/example-client -alice -msg "Tea?"
@@ -61,10 +72,16 @@ run-client-alice: compile-client
 run-client-bob: compile-client
 	./target/example-client -bob -msg "Coffee?"
 
+run-client-tests: run-client run-client-alice run-client-bob
+
+# ========================================================================================
+# Plain HTTP client: curl
+# ========================================================================================
+
 run-curl:
 	curl --silent --show-error --fail --insecure  \
 		-H 'Content-Type: application/json' \
-		-H 'Authorization: Bearer ${BEARER_TOKEN}' \
+		-H 'Authorization: Bearer letmein' \
 		-d '{"message": "hello"}' https://localhost:8080/v1/example/echo | jq '.'
 
 run-curl-alice:
@@ -79,9 +96,15 @@ run-curl-bob:
 		-H 'Content-Type: application/json' \
 		-d '{"message": "Whiskey?"}' https://localhost:8080/v1/example/echo | jq '.'
 
+run-curl-tests: run-curl run-curl-alice run-curl-bob
+
+# ========================================================================================
+# Third-party gRPC client: grpcurl
+# ========================================================================================
+
 run-grpcurl:
 	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-d '{"message":"howdy"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+		-d '{"message":"howdy"}' -H 'authorization: bearer wibble' \
 		-import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
 		-import-path ./api \
 		-proto api/service.proto  \
@@ -89,7 +112,7 @@ run-grpcurl:
 
 run-grpcurl-ref:
 	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-d '{"message":"hola"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+		-d '{"message":"hola"}' -H 'authorization: bearer letmein' \
 		localhost:8000 example.service.Example/Echo
 
 run-grpcurl-alice:
@@ -103,3 +126,5 @@ run-grpcurl-bob:
 		-cert pki/bob.crt -key pki/bob.key \
 		-d '{"message":"Vodka?"}' \
 		localhost:8000 example.service.Example/Echo
+
+run-grpcurl-tests: run-grpcurl run-grpcurl-ref run-grpcurl-alice run-grpcurl-bob
