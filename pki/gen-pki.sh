@@ -19,7 +19,7 @@ openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key \
         -CAcreateserial -out server.crt -days 10000 \
         -extensions v3_ext -extfile server-csr.conf
 
-# Generate alice TLS key & certificate
+# Generate Alice's TLS key & certificate
 
 openssl genrsa -out alice.key 2048
 
@@ -29,7 +29,7 @@ openssl x509 -req -in alice.csr -CA ca.crt -CAkey ca.key \
         -CAcreateserial -out alice.crt -days 10000 \
         -extensions v3_ext -extfile alice-csr.conf
 
-# Generate bob TLS key & certificate
+# Generate Bob's TLS key & certificate
 
 openssl genrsa -out bob.key 2048
 
