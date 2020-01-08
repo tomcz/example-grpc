@@ -50,7 +50,7 @@ run-server-mw: compile-server
 	./target/example-server -middleware
 
 run-server-ref: compile-server
-	./target/example-server -reflection
+	./target/example-server -reflection -mtls
 
 run-client: compile-client
 	./target/example-client -token ${BEARER_TOKEN} -msg "G'day"
@@ -63,8 +63,21 @@ run-client-bob: compile-client
 
 run-curl:
 	curl --silent --show-error --fail --insecure  \
-		-H 'Content-Type: application/json' -H 'Authorization: Bearer ${BEARER_TOKEN}' \
+		-H 'Content-Type: application/json' \
+		-H 'Authorization: Bearer ${BEARER_TOKEN}' \
 		-d '{"message": "hello"}' https://localhost:8080/v1/example/echo | jq '.'
+
+run-curl-alice:
+	curl --silent --show-error --fail --insecure \
+		--key pki/alice.key --cert pki/alice.crt \
+		-H 'Content-Type: application/json' \
+		-d '{"message": "Wine?"}' https://localhost:8080/v1/example/echo | jq '.'
+
+run-curl-bob:
+	curl --silent --show-error --fail --insecure \
+		--key pki/bob.key --cert pki/bob.crt \
+		-H 'Content-Type: application/json' \
+		-d '{"message": "Whiskey?"}' https://localhost:8080/v1/example/echo | jq '.'
 
 run-grpcurl:
 	grpcurl -cacert pki/ca.crt -servername server.example.com \
@@ -77,4 +90,16 @@ run-grpcurl:
 run-grpcurl-ref:
 	grpcurl -cacert pki/ca.crt -servername server.example.com \
 		-d '{"message":"hola"}' -H 'authorization: bearer ${BEARER_TOKEN}' \
+		localhost:8000 example.service.Example/Echo
+
+run-grpcurl-alice:
+	grpcurl -cacert pki/ca.crt -servername server.example.com \
+		-cert pki/alice.crt -key pki/alice.key \
+		-d '{"message":"Gin?"}' \
+		localhost:8000 example.service.Example/Echo
+
+run-grpcurl-bob:
+	grpcurl -cacert pki/ca.crt -servername server.example.com \
+		-cert pki/bob.crt -key pki/bob.key \
+		-d '{"message":"Vodka?"}' \
 		localhost:8000 example.service.Example/Echo

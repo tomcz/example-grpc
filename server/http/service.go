@@ -42,6 +42,9 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, allowMtls
 	for _, mw := range middleware {
 		handler = mw(handler)
 	}
+	if allowMtls {
+		handler = mTLSAuthHandler(handler)
+	}
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: handler,
