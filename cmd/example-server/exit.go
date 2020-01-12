@@ -14,7 +14,7 @@ import (
 
 type action func() error
 
-func waitForExit(ctx context.Context, shutdown func(), runList ...action) {
+func runAndWaitForExit(ctx context.Context, shutdown func(), runList ...action) {
 	runList = append(runList, waitForSignalAction(ctx))
 	var wg sync.WaitGroup
 	var once sync.Once
