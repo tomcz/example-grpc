@@ -15,6 +15,7 @@ import (
 type action func() error
 
 func runAndWaitForExit(ctx context.Context, shutdown func(), runList ...action) {
+	ctx, shutdown = withCancel(ctx, shutdown)
 	runList = append(runList, waitForSignalAction(ctx))
 	var wg sync.WaitGroup
 	var once sync.Once
@@ -29,6 +30,14 @@ func runAndWaitForExit(ctx context.Context, shutdown func(), runList ...action) 
 		}(runItem)
 	}
 	wg.Wait()
+}
+
+func withCancel(ctx context.Context, shutdown func()) (context.Context, func()) {
+	ctx, cancel := context.WithCancel(ctx)
+	return ctx, func() {
+		cancel()
+		shutdown()
+	}
 }
 
 func handlePanic(runThis action) (err error) {
