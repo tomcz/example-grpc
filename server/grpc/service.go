@@ -3,7 +3,6 @@ package grpc
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -80,9 +79,8 @@ func (s *service) ListenAndServe() error {
 	if err := s.server.Serve(lis); err != nil {
 		return err
 	}
-	// Serve will return a nil error when GracefulStop is called
-	// but it's good for us to know that it has been stopped
-	return errors.New("gRPC server stopped")
+	log.Println("gRPC server stopped")
+	return nil
 }
 
 func (s *service) GracefulStop() {
