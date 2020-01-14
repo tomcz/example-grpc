@@ -62,7 +62,8 @@ func realMain() error {
 	shutdown := func() {
 		grpcSrv.GracefulStop()
 		httpSrv.GracefulStop()
+		cancel()
 	}
-	runAndWaitForExit(ctx, shutdown, grpcSrv.ListenAndServe, httpSrv.ListenAndServe)
+	runAndWaitForExit(shutdown, grpcSrv.ListenAndServe, httpSrv.ListenAndServe)
 	return nil
 }

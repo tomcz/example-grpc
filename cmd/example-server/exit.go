@@ -14,8 +14,8 @@ import (
 
 type action func() error
 
-func runAndWaitForExit(ctx context.Context, shutdown func(), runList ...action) {
-	ctx, shutdown = withCancel(ctx, shutdown)
+func runAndWaitForExit(shutdown func(), runList ...action) {
+	ctx, shutdown := withCancel(shutdown)
 	runList = append(runList, waitForSignalAction(ctx))
 	var wg sync.WaitGroup
 	var once sync.Once
@@ -32,8 +32,8 @@ func runAndWaitForExit(ctx context.Context, shutdown func(), runList ...action) 
 	wg.Wait()
 }
 
-func withCancel(ctx context.Context, shutdown func()) (context.Context, func()) {
-	ctx, cancel := context.WithCancel(ctx)
+func withCancel(shutdown func()) (context.Context, func()) {
+	ctx, cancel := context.WithCancel(context.Background())
 	return ctx, func() {
 		cancel()
 		shutdown()
