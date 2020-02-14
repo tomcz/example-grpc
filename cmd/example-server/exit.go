@@ -17,17 +17,19 @@ type action func() error
 func runAndWaitForExit(shutdown func(), runList ...action) {
 	ctx, shutdown := withCancel(shutdown)
 	runList = append(runList, waitForSignalAction(ctx))
-	var wg sync.WaitGroup
 	var once sync.Once
-	for _, runItem := range runList {
-		wg.Add(1)
-		go func(runThis action) {
-			if err := handlePanic(runThis); err != nil {
-				log.Println(err)
-			}
-			once.Do(shutdown)
-			wg.Done()
-		}(runItem)
+	var wg sync.WaitGroup
+	run := func(item action) {
+		err := invoke(item)
+		if err != nil {
+			log.Println(err)
+		}
+		once.Do(shutdown)
+		wg.Done()
+	}
+	wg.Add(len(runList))
+	for _, item := range runList {
+		go run(item)
 	}
 	wg.Wait()
 }
@@ -40,13 +42,13 @@ func withCancel(shutdown func()) (context.Context, func()) {
 	}
 }
 
-func handlePanic(runThis action) (err error) {
+func invoke(item action) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = fmt.Errorf("panic: %v, stack: %s", r, string(debug.Stack()))
 		}
 	}()
-	return runThis()
+	return item()
 }
 
 func waitForSignalAction(ctx context.Context) action {
