@@ -11,7 +11,7 @@ import (
 	"github.com/tomcz/example-grpc/server"
 )
 
-func authMiddleware(auth server.Auth, next http.Handler) http.Handler {
+func authMiddleware(auth server.TokenAuth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username := server.UserName(r.Context())
 		if username != "" {
@@ -36,9 +36,7 @@ func authMiddleware(auth server.Auth, next http.Handler) http.Handler {
 		var err error
 		username, err = auth.Authenticate(pair[1])
 		if err != nil {
-			errorID := uuid.New()
-			log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
-			http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
+			authFailed(w, err)
 			return
 		}
 		r = r.WithContext(server.WithUserName(r.Context(), username))
@@ -46,15 +44,26 @@ func authMiddleware(auth server.Auth, next http.Handler) http.Handler {
 	})
 }
 
-func mtlsMiddleware(next http.Handler) http.Handler {
+func mtlsMiddleware(mtls server.AllowList, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		certs := r.TLS.PeerCertificates
 		if len(certs) > 0 {
-			dnsNames := certs[0].DNSNames
-			if len(dnsNames) > 0 {
-				r = r.WithContext(server.WithUserName(r.Context(), dnsNames[0]))
+			cert := certs[0]
+			username, err := mtls.Allow(cert)
+			if err != nil {
+				authFailed(w, err)
+				return
+			}
+			if username != "" {
+				r = r.WithContext(server.WithUserName(r.Context(), username))
 			}
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func authFailed(w http.ResponseWriter, err error) {
+	errorID := uuid.New()
+	log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
+	http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
 }

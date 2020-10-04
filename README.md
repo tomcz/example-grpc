@@ -21,19 +21,19 @@ All the following `make` targets run a gRPC server on port 8000, and a HTTP serv
 
 2. `make run-client-alice` runs a gRPC client that sends a mTLS request to the gRPC endpoint using Alice's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
 
-3. `make run-client-bob` runs a gRPC client that sends a mTLS request to the gRPC endpoint using Bob's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
+3. `make run-client-bob` runs a gRPC client that sends a mTLS request to the gRPC endpoint using Bob's certificate & key. It will fail since Bob's certificate is not permitted.
 
 4. `make run-curl` invokes curl to send a token-authenticated request to the HTTP server.
 
 5. `make run-curl-alice` invokes curl to send a mTLS request to the HTTP server using Alice's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
 
-6. `make run-curl-bob` invokes curl to send a mTLS request to the HTTP server using Bob's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
+6. `make run-curl-bob` invokes curl to send a mTLS request to the HTTP server using Bob's certificate & key. It will fail since Bob's certificate is not permitted.
 
 7. `make run-grpcurl` invokes [grpcurl](https://github.com/fullstorydev/grpcurl) to send a token-authenticated request to the gRPC server.
 
 8. `make run-grpcurl-alice` invokes [grpcurl](https://github.com/fullstorydev/grpcurl) to send a mTLS request to the gRPC server using Alice's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
 
-9. `make run-grpcurl-bob` invokes [grpcurl](https://github.com/fullstorydev/grpcurl) to send a mTLS request to the gRPC server using Bob's certificate & key. It will only work with `make run-server-mtls` since it requires the server to process the client certificate.
+9. `make run-grpcurl-bob` invokes [grpcurl](https://github.com/fullstorydev/grpcurl) to send a mTLS request to the gRPC server using Bob's certificate & key. It will fail since Bob's certificate is not permitted.
 
 ## Compiling service.proto
 

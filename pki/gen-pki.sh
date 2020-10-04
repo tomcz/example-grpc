@@ -38,3 +38,7 @@ openssl req -new -key bob.key -out bob.csr -config bob-csr.conf
 openssl x509 -req -in bob.csr -CA ca.crt -CAkey ca.key \
         -CAcreateserial -out bob.crt -days 10000 \
         -extensions v3_ext -extfile bob-csr.conf
+
+# Cleanup
+
+rm *.csr

@@ -23,7 +23,7 @@ type service struct {
 }
 
 // NewService creates a HTTP service
-func NewService(ctx context.Context, impl api.ExampleServer, port int, auth server.Auth, allowMtls bool) (server.Service, error) {
+func NewService(ctx context.Context, impl api.ExampleServer, port int, auth server.TokenAuth, mtls server.AllowList) (server.Service, error) {
 	// use least-surprising JSON output options
 	marshaller := &runtime.JSONPb{OrigName: true, EmitDefaults: true}
 	// yes, we are matching all incoming input as JSON, but see note below
@@ -36,14 +36,14 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, auth serv
 	// it does not check that the Content-Type is actually JSON, so let's enforce that a bit.
 	handler := handlers.ContentTypeHandler(httpMux, "application/json")
 	handler = authMiddleware(auth, handler)
-	if allowMtls {
-		handler = mtlsMiddleware(handler)
+	if mtls.Enabled() {
+		handler = mtlsMiddleware(mtls, handler)
 	}
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: handler,
 	}
-	if allowMtls {
+	if mtls.Enabled() {
 		cfg, err := mtlsConfig()
 		if err != nil {
 			return nil, err
@@ -52,7 +52,7 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, auth serv
 	}
 	return &service{
 		server: srv,
-		mtls:   allowMtls,
+		mtls:   mtls.Enabled(),
 		port:   port,
 	}, nil
 }

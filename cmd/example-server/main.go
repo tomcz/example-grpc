@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/tomcz/example-grpc/server/bearer"
+	"github.com/tomcz/example-grpc/server"
 	"github.com/tomcz/example-grpc/server/echo"
 	"github.com/tomcz/example-grpc/server/grpcx"
 	"github.com/tomcz/example-grpc/server/httpx"
@@ -14,8 +14,8 @@ import (
 var (
 	grpcPort = flag.Int("grpc", 8000, "gRPC listener port")
 	httpPort = flag.Int("http", 8080, "HTTP listener port")
-	tokens   = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
-	mtls     = flag.Bool("mtls", false, "enable mTLS between server & clients")
+	tokens   = flag.String("tokens", "", "valid bearer tokens")
+	domains  = flag.String("domains", "", "valid client TLS certificate domains")
 )
 
 func main() {
@@ -33,13 +33,14 @@ func realMain() error {
 	defer cancel()
 
 	impl := echo.NewExampleServer()
-	auth := bearer.NewBearerAuth(*tokens)
+	auth := server.NewBearerAuth(*tokens)
+	mtls := server.NewDomainAllowList(*domains)
 
-	grpcSrv, err := grpcx.NewService(impl, *grpcPort, auth, *mtls)
+	grpcSrv, err := grpcx.NewService(impl, *grpcPort, auth, mtls)
 	if err != nil {
 		return err
 	}
-	httpSrv, err := httpx.NewService(ctx, impl, *httpPort, auth, *mtls)
+	httpSrv, err := httpx.NewService(ctx, impl, *httpPort, auth, mtls)
 	if err != nil {
 		return err
 	}

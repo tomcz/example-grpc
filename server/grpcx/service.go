@@ -22,13 +22,13 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int, auth server.Auth, allowMtls bool) (server.Service, error) {
+func NewService(impl api.ExampleServer, port int, auth server.TokenAuth, mtls server.AllowList) (server.Service, error) {
 	authFunc := newServerAuthFunc(auth)
-	if allowMtls {
-		authFunc = newMTLSAuthFunc(authFunc)
+	if mtls.Enabled() {
+		authFunc = newMTLSAuthFunc(mtls, authFunc)
 	}
 	grpcOpts := authMiddleware(authFunc)
-	tc, err := newTransportCredentials(allowMtls)
+	tc, err := newTransportCredentials(mtls.Enabled())
 	if err != nil {
 		return nil, err
 	}
