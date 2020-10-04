@@ -4,6 +4,9 @@
 GOPATH = $(shell go env GOPATH)
 PACKAGES = $(shell go list ./... | grep -v vendor)
 
+# default make shell is /bin/sh which does not support pipefail
+SHELL=/bin/bash -eo pipefail
+
 all: clean format lint compile
 
 clean:
@@ -50,15 +53,6 @@ run-server: compile-server
 run-server-mtls: compile-server
 	./target/example-server -mtls
 
-run-server-mw: compile-server
-	./target/example-server -middleware
-
-run-server-ref: compile-server
-	./target/example-server -reflection -mtls
-
-run-server-test: compile-server
-	./target/example-server -middleware -reflection -mtls
-
 # ========================================================================================
 # Custom gRPC client
 # ========================================================================================
@@ -104,14 +98,6 @@ run-curl-tests: run-curl run-curl-alice run-curl-bob
 
 run-grpcurl:
 	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-d '{"message":"howdy"}' -H 'authorization: bearer wibble' \
-		-import-path ${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-		-import-path ./api \
-		-proto api/service.proto  \
-		localhost:8000 example.service.Example/Echo
-
-run-grpcurl-ref:
-	grpcurl -cacert pki/ca.crt -servername server.example.com \
 		-d '{"message":"hola"}' -H 'authorization: bearer letmein' \
 		localhost:8000 example.service.Example/Echo
 
@@ -127,4 +113,4 @@ run-grpcurl-bob:
 		-d '{"message":"Vodka?"}' \
 		localhost:8000 example.service.Example/Echo
 
-run-grpcurl-tests: run-grpcurl run-grpcurl-ref run-grpcurl-alice run-grpcurl-bob
+run-grpcurl-tests: run-grpcurl run-grpcurl-alice run-grpcurl-bob

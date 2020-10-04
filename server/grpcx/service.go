@@ -1,4 +1,4 @@
-package grpc
+package grpcx
 
 import (
 	"crypto/tls"
@@ -22,17 +22,20 @@ type service struct {
 }
 
 // NewService creates a gRPC service
-func NewService(impl api.ExampleServer, port int, allowReflection bool, allowMtls bool, opts ...grpc.ServerOption) (server.Service, error) {
+func NewService(impl api.ExampleServer, port int, auth server.Auth, allowMtls bool) (server.Service, error) {
+	authFunc := newServerAuthFunc(auth)
+	if allowMtls {
+		authFunc = newMTLSAuthFunc(authFunc)
+	}
+	grpcOpts := authMiddleware(authFunc)
 	tc, err := newTransportCredentials(allowMtls)
 	if err != nil {
 		return nil, err
 	}
-	opts = append(opts, grpc.Creds(tc))
-	srv := grpc.NewServer(opts...)
+	grpcOpts = append(grpcOpts, grpc.Creds(tc))
+	srv := grpc.NewServer(grpcOpts...)
 	api.RegisterExampleServer(srv, impl)
-	if allowReflection {
-		reflection.Register(srv)
-	}
+	reflection.Register(srv)
 	return &service{
 		server: srv,
 		port:   port,
@@ -66,7 +69,6 @@ func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
 		ClientCAs:    caCertPool,
 		Certificates: []tls.Certificate{cert},
 	}
-	cfg.BuildNameToCertificate()
 	return credentials.NewTLS(cfg), nil
 }
 

@@ -5,21 +5,17 @@ import (
 	"flag"
 	"log"
 
-	rpc "google.golang.org/grpc"
-
-	"github.com/tomcz/example-grpc/server/auth"
+	"github.com/tomcz/example-grpc/server/bearer"
 	"github.com/tomcz/example-grpc/server/echo"
-	"github.com/tomcz/example-grpc/server/grpc"
-	"github.com/tomcz/example-grpc/server/http"
+	"github.com/tomcz/example-grpc/server/grpcx"
+	"github.com/tomcz/example-grpc/server/httpx"
 )
 
 var (
-	grpcPort   = flag.Int("grpc", 8000, "gRPC listener port")
-	httpPort   = flag.Int("http", 8080, "HTTP listener port")
-	tokens     = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
-	middleware = flag.Bool("middleware", false, "apply authentication middleware")
-	reflection = flag.Bool("reflection", false, "enable server reflection API")
-	mtls       = flag.Bool("mtls", false, "enable mTLS between server & clients")
+	grpcPort = flag.Int("grpc", 8000, "gRPC listener port")
+	httpPort = flag.Int("http", 8080, "HTTP listener port")
+	tokens   = flag.String("tokens", "alice:wibble,bob:letmein", "valid bearer tokens")
+	mtls     = flag.Bool("mtls", false, "enable mTLS between server & clients")
 )
 
 func main() {
@@ -37,24 +33,13 @@ func realMain() error {
 	defer cancel()
 
 	impl := echo.NewExampleServer()
-	authn := auth.NewBearerAuth(*tokens)
+	auth := bearer.NewBearerAuth(*tokens)
 
-	var httpMiddleware []http.Middleware
-	var grpcMiddleware []rpc.ServerOption
-	if *middleware {
-		log.Println("using HTTP & gRPC middleware for authentication")
-		httpMiddleware = http.AuthMiddleware(authn)
-		grpcMiddleware = grpc.AuthMiddleware(authn)
-	} else {
-		log.Println("using service decorator for authentication")
-		impl = auth.NewAuthDecorator(impl, authn)
-	}
-
-	grpcSrv, err := grpc.NewService(impl, *grpcPort, *reflection, *mtls, grpcMiddleware...)
+	grpcSrv, err := grpcx.NewService(impl, *grpcPort, auth, *mtls)
 	if err != nil {
 		return err
 	}
-	httpSrv, err := http.NewService(ctx, impl, *httpPort, *mtls, httpMiddleware...)
+	httpSrv, err := httpx.NewService(ctx, impl, *httpPort, auth, *mtls)
 	if err != nil {
 		return err
 	}
@@ -64,6 +49,10 @@ func realMain() error {
 		grpcSrv.GracefulStop()
 		httpSrv.GracefulStop()
 	}
-	runAndWaitForExit(shutdown, grpcSrv.ListenAndServe, httpSrv.ListenAndServe)
+	runAndWaitForExit(
+		shutdown,
+		grpcSrv.ListenAndServe,
+		httpSrv.ListenAndServe,
+	)
 	return nil
 }

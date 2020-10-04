@@ -1,4 +1,4 @@
-package http
+package httpx
 
 import (
 	"context"
@@ -16,9 +16,6 @@ import (
 	"github.com/tomcz/example-grpc/server"
 )
 
-// Middleware allows the creation of handler chains
-type Middleware func(http.Handler) http.Handler
-
 type service struct {
 	server *http.Server
 	mtls   bool
@@ -26,7 +23,7 @@ type service struct {
 }
 
 // NewService creates a HTTP service
-func NewService(ctx context.Context, impl api.ExampleServer, port int, allowMtls bool, middleware ...Middleware) (server.Service, error) {
+func NewService(ctx context.Context, impl api.ExampleServer, port int, auth server.Auth, allowMtls bool) (server.Service, error) {
 	// use least-surprising JSON output options
 	marshaller := &runtime.JSONPb{OrigName: true, EmitDefaults: true}
 	// yes, we are matching all incoming input as JSON, but see note below
@@ -38,12 +35,9 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, allowMtls
 	// NOTE: grpc-gateway does not play nice with anything other than JSON request bodies but
 	// it does not check that the Content-Type is actually JSON, so let's enforce that a bit.
 	handler := handlers.ContentTypeHandler(httpMux, "application/json")
-	// apply any additional middleware
-	for _, mw := range middleware {
-		handler = mw(handler)
-	}
+	handler = authMiddleware(auth, handler)
 	if allowMtls {
-		handler = mTLSAuthHandler(handler)
+		handler = mtlsMiddleware(handler)
 	}
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -83,7 +77,6 @@ func mtlsConfig() (*tls.Config, error) {
 		ClientCAs:    caCertPool,
 		Certificates: []tls.Certificate{cert},
 	}
-	cfg.BuildNameToCertificate()
 	return cfg, nil
 }
 
