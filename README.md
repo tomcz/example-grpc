@@ -1,4 +1,4 @@
-# example-grpc-mtls
+# example-grpc
 
 Example of an authenticated gRPC & grpc-gateway HTTP server, and various client connection examples.
 
