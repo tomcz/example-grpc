@@ -17,7 +17,10 @@ import (
 
 func authMiddleware(authFunc mw.AuthFunc) []grpc.ServerOption {
 	return []grpc.ServerOption{
+		// echo service only has unary endpoints, but ...
 		grpc.UnaryInterceptor(mw.UnaryServerInterceptor(authFunc)),
+		// grpcurl uses a streaming endpoint for reflection,
+		// so let's make sure the user is allowed to reflect
 		grpc.StreamInterceptor(mw.StreamServerInterceptor(authFunc)),
 	}
 }

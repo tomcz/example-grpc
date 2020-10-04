@@ -35,7 +35,7 @@ func NewService(impl api.ExampleServer, port int, auth server.TokenAuth, mtls se
 	grpcOpts = append(grpcOpts, grpc.Creds(tc))
 	srv := grpc.NewServer(grpcOpts...)
 	api.RegisterExampleServer(srv, impl)
-	reflection.Register(srv)
+	reflection.Register(srv) // make it easy to use grpcurl
 	return &service{
 		server: srv,
 		port:   port,
