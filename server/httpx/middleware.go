@@ -48,8 +48,7 @@ func mtlsMiddleware(mtls server.AllowList, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		certs := r.TLS.PeerCertificates
 		if len(certs) > 0 {
-			cert := certs[0]
-			username, err := mtls.Allow(cert)
+			username, err := mtls.Allow(certs[0])
 			if err != nil {
 				authFailed(w, err)
 				return
