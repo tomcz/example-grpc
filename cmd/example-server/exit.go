@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -14,15 +13,17 @@ import (
 
 type action func() error
 
-func runAndWaitForExit(shutdown func(), runList ...action) {
+func runAndWaitForExit(shutdown func(), runList ...action) error {
 	ctx, shutdown := withCancel(shutdown)
 	runList = append(runList, waitForSignalAction(ctx))
+	var res sync.Map
 	var once sync.Once
 	var wg sync.WaitGroup
 	run := func(item action) {
 		err := invoke(item)
 		if err != nil {
 			log.Println(err)
+			res.LoadOrStore("error", err)
 		}
 		once.Do(shutdown)
 		wg.Done()
@@ -32,6 +33,10 @@ func runAndWaitForExit(shutdown func(), runList ...action) {
 		go run(item)
 	}
 	wg.Wait()
+	if err, ok := res.Load("error"); ok {
+		return err.(error)
+	}
+	return nil
 }
 
 func withCancel(shutdown func()) (context.Context, func()) {
@@ -67,7 +72,8 @@ func waitForSignal(ctx context.Context) error {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	select {
 	case <-signalChan:
-		return errors.New("shutdown received")
+		log.Println("shutdown received")
+		return nil
 	case <-ctx.Done():
 		return nil
 	}
