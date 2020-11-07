@@ -21,7 +21,7 @@ func runAndWaitForExit(shutdown func(), runList ...action) {
 	var wg sync.WaitGroup
 	run := func(item action) {
 		err := invoke(item)
-		if err != nil && !errors.Is(err, context.Canceled) {
+		if err != nil {
 			log.Println(err)
 		}
 		once.Do(shutdown)
@@ -69,6 +69,6 @@ func waitForSignal(ctx context.Context) error {
 	case <-signalChan:
 		return errors.New("shutdown received")
 	case <-ctx.Done():
-		return ctx.Err()
+		return nil
 	}
 }
