@@ -37,6 +37,11 @@ func runAndWaitForExit(shutdown func(), runList ...action) {
 func withCancel(shutdown func()) (context.Context, func()) {
 	ctx, cancel := context.WithCancel(context.Background())
 	return ctx, func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("shutdown panic: %v, stack %s", r, string(debug.Stack()))
+			}
+		}()
 		cancel()
 		shutdown()
 	}
