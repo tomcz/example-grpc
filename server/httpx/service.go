@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -84,9 +85,17 @@ func (s *service) ListenAndServe() error {
 	log.Println("staring HTTP server on port", s.port)
 	if s.mtls {
 		// cert & key files provided during mTLS setup
-		return s.server.ListenAndServeTLS("", "")
+		err := s.server.ListenAndServeTLS("", "")
+		if err != nil && errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
 	}
-	return s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
+	err := s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
+	if err != nil && errors.Is(err, http.ErrServerClosed) {
+		return nil
+	}
+	return err
 }
 
 func (s *service) GracefulStop() {

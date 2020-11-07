@@ -78,11 +78,7 @@ func (s *service) ListenAndServe() error {
 	if err != nil {
 		return err
 	}
-	if err := s.server.Serve(lis); err != nil {
-		return err
-	}
-	log.Println("gRPC server stopped")
-	return nil
+	return s.server.Serve(lis)
 }
 
 func (s *service) GracefulStop() {

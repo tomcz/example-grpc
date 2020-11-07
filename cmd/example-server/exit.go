@@ -21,7 +21,7 @@ func runAndWaitForExit(shutdown func(), runList ...action) {
 	var wg sync.WaitGroup
 	run := func(item action) {
 		err := invoke(item)
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			log.Println(err)
 		}
 		once.Do(shutdown)
