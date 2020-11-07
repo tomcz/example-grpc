@@ -9,6 +9,8 @@ import (
 	"runtime/debug"
 	"sync"
 	"syscall"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 type action func() error
@@ -19,24 +21,25 @@ func runAndWaitForExit(shutdown func(), runList ...action) error {
 	var res sync.Map
 	var once sync.Once
 	var wg sync.WaitGroup
-	run := func(item action) {
+	run := func(idx int, item action) {
 		err := invoke(item)
 		if err != nil {
-			log.Println(err)
-			res.LoadOrStore("error", err)
+			res.Store(idx, err)
 		}
 		once.Do(shutdown)
 		wg.Done()
 	}
 	wg.Add(len(runList))
-	for _, item := range runList {
-		go run(item)
+	for i, item := range runList {
+		go run(i, item)
 	}
 	wg.Wait()
-	if err, ok := res.Load("error"); ok {
-		return err.(error)
-	}
-	return nil
+	var err error
+	res.Range(func(key, value interface{}) bool {
+		err = multierror.Append(value.(error))
+		return true
+	})
+	return err
 }
 
 func withCancel(shutdown func()) (context.Context, func()) {
