@@ -36,7 +36,7 @@ func runAndWaitForExit(shutdown func(), runList ...action) error {
 	wg.Wait()
 	var err error
 	res.Range(func(key, value interface{}) bool {
-		err = multierror.Append(value.(error))
+		err = multierror.Append(err, value.(error))
 		return true
 	})
 	return err
