@@ -4,6 +4,11 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/tomcz/example-grpc/server"
 	"github.com/tomcz/example-grpc/server/echo"
@@ -45,14 +50,29 @@ func realMain() error {
 		return err
 	}
 
-	shutdown := func() {
-		cancel()
-		grpcSrv.GracefulStop()
-		httpSrv.GracefulStop()
-	}
-	return runAndWaitForExit(
-		shutdown,
-		grpcSrv.ListenAndServe,
-		httpSrv.ListenAndServe,
-	)
+	var group errgroup.Group
+	group.Go(func() error {
+		defer cancel()
+		return grpcSrv.ListenAndServe()
+	})
+	group.Go(func() error {
+		defer cancel()
+		return httpSrv.ListenAndServe()
+	})
+	group.Go(func() error {
+		defer func() {
+			grpcSrv.GracefulStop()
+			httpSrv.GracefulStop()
+		}()
+		signalChan := make(chan os.Signal)
+		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+		select {
+		case <-signalChan:
+			log.Println("shutdown received")
+			return nil
+		case <-ctx.Done():
+			return nil
+		}
+	})
+	return group.Wait()
 }
