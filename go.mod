@@ -8,7 +8,6 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1
-	github.com/hashicorp/go-multierror v1.1.0
 	github.com/pborman/uuid v1.2.0
 	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
