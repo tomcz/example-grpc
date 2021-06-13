@@ -19,7 +19,7 @@ ifeq (, $(shell which goimports))
 	go install golang.org/x/tools/cmd/goimports
 endif
 	@echo "Running goimports ..."
-	@goimports -w -local github.com/tomcz/example-grpc $(shell find . -type f -name '*.go' | grep -v '/vendor/')
+	goimports -w -local github.com/tomcz/example-grpc .
 
 lint:
 ifeq (, $(shell which staticcheck))
