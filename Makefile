@@ -2,7 +2,6 @@
 .PHONY: compile compile-server compile-client
 
 GOPATH = $(shell go env GOPATH)
-PACKAGES = $(shell go list ./... | grep -v vendor)
 
 # default make shell is /bin/sh which does not support pipefail
 SHELL=/bin/bash -eo pipefail
@@ -16,14 +15,17 @@ target:
 	mkdir target
 
 format:
+ifeq (, $(shell which goimports))
+	go install golang.org/x/tools/cmd/goimports
+endif
 	@echo "Running goimports ..."
 	@goimports -w -local github.com/tomcz/example-grpc $(shell find . -type f -name '*.go' | grep -v '/vendor/')
 
 lint:
-	@echo "Running govet ..."
-	@go vet ${PACKAGES}
-	@echo "Running golint ..."
-	@golint -set_exit_status ${PACKAGES}
+ifeq (, $(shell which staticcheck))
+	go install honnef.co/go/tools/cmd/staticcheck@2021.1
+endif
+	staticcheck ./...
 
 genproto:
 	protoc -Iapi/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
