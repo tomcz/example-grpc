@@ -2,11 +2,11 @@ package httpx
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/pborman/uuid"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/tomcz/example-grpc/server"
 )
@@ -63,6 +63,6 @@ func mtlsMiddleware(mtls server.AllowList, next http.Handler) http.Handler {
 
 func authFailed(w http.ResponseWriter, err error) {
 	errorID := uuid.New()
-	log.Printf("auth failed - error id: %s, error: %v\n", errorID, err)
+	log.WithError(err).WithField("error_id", errorID).Warn("auth failed")
 	http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
 }

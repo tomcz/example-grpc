@@ -7,9 +7,9 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/golang/protobuf/jsonpb"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
@@ -30,9 +30,9 @@ func main() {
 	// Fatal logging prevents defer from firing, so wrap the
 	// service configuration & startup in a realMain function.
 	if err := realMain(); err != nil {
-		log.Fatalf("application failed - error is: %v\n", err)
+		log.WithError(err).Fatal("application failed")
 	}
-	log.Println("application stopped")
+	log.Info("application stopped")
 }
 
 func realMain() error {

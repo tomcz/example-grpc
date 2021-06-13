@@ -7,11 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
@@ -82,7 +82,7 @@ func mtlsConfig() (*tls.Config, error) {
 }
 
 func (s *service) ListenAndServe() error {
-	log.Println("staring HTTP server on port", s.port)
+	log.WithField("port", s.port).Info("staring HTTP server")
 	if s.mtls {
 		// cert & key files provided during mTLS setup
 		err := s.server.ListenAndServeTLS("", "")

@@ -5,9 +5,9 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
@@ -73,7 +73,7 @@ func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
 }
 
 func (s *service) ListenAndServe() error {
-	log.Println("staring gRPC server on port", s.port)
+	log.WithField("port", s.port).Info("staring gRPC server")
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", s.port))
 	if err != nil {
 		return err

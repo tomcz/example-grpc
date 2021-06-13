@@ -2,9 +2,9 @@ package echo
 
 import (
 	"context"
-	"log"
 
 	"github.com/golang/protobuf/ptypes"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
@@ -18,7 +18,7 @@ func NewExampleServer() api.ExampleServer {
 }
 
 func (s *plainServer) Echo(ctx context.Context, in *api.EchoRequest) (*api.EchoResponse, error) {
-	log.Printf("user: %v - request: %v\n", server.UserName(ctx), in.Message)
+	log.WithField("user", server.UserName(ctx)).Info(in.Message)
 	return &api.EchoResponse{
 		Message:   in.Message,
 		CreatedAt: ptypes.TimestampNow(),

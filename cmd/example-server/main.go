@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/tomcz/example-grpc/server"
@@ -28,9 +28,9 @@ func main() {
 	// Fatal logging prevents defer from firing, so wrap the
 	// service configuration & startup in a realMain function.
 	if err := realMain(); err != nil {
-		log.Fatalf("application failed - error is: %v\n", err)
+		log.WithError(err).Fatal("application failed")
 	}
-	log.Println("application stopped")
+	log.Info("application stopped")
 }
 
 func realMain() error {
@@ -68,7 +68,7 @@ func realMain() error {
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
 		case <-signalChan:
-			log.Println("shutdown received")
+			log.Info("shutdown received")
 			return nil
 		case <-ctx.Done():
 			return nil
