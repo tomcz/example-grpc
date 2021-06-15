@@ -4,7 +4,7 @@ Example of an authenticated gRPC & grpc-gateway HTTP server, and various client 
 
 ## Setting up
 
-1. Install Go 1.13 from https://golang.org/
+1. Install Go 1.16 from https://golang.org/
 2. Run `make compile` to compile the server & client code.
 
 ## Running the server
