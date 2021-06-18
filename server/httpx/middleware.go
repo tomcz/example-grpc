@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/pborman/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/tomcz/example-grpc/server"
@@ -62,7 +61,7 @@ func mtlsMiddleware(mtls server.AllowList, next http.Handler) http.Handler {
 }
 
 func authFailed(w http.ResponseWriter, err error) {
-	errorID := uuid.New()
+	errorID := server.ErrorID()
 	log.WithError(err).WithField("error_id", errorID).Warn("auth failed")
-	http.Error(w, fmt.Sprintf("Authorization failed: %s", errorID), http.StatusForbidden)
+	http.Error(w, fmt.Sprintf("Authorization failed - error_id: %s", errorID), http.StatusForbidden)
 }

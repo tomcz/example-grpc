@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -97,7 +98,7 @@ func (d *domainAllowList) Allow(cert *x509.Certificate) (username string, err er
 			return san, nil
 		}
 	}
-	return "", ErrNoCertMatch
+	return "", fmt.Errorf("%w - CN: %s", ErrNoCertMatch, cn)
 }
 
 func (d *domainAllowList) Enabled() bool {

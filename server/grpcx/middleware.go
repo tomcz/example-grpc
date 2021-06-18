@@ -4,7 +4,6 @@ import (
 	"context"
 
 	mw "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	"github.com/pborman/uuid"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -60,7 +59,7 @@ func newMTLSAuthFunc(mtls server.AllowList, next mw.AuthFunc) mw.AuthFunc {
 }
 
 func authFailed(err error) (context.Context, error) {
-	errorID := uuid.New()
+	errorID := server.ErrorID()
 	log.WithError(err).WithField("error_id", errorID).Warn("auth failed")
-	return nil, status.Error(codes.PermissionDenied, errorID)
+	return nil, status.Errorf(codes.PermissionDenied, "error_id: %s", errorID)
 }
