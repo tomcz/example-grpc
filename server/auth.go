@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+// ErrInvalidToken authentication failure
+var ErrInvalidToken = errors.New("invalid token")
+
+// ErrNoCertMatch authentication failure
+var ErrNoCertMatch = errors.New("no certificate match")
+
 type contextKey int
 
 const (
@@ -25,9 +31,6 @@ func UserName(ctx context.Context) string {
 	}
 	return ""
 }
-
-// ErrInvalidToken authentication failure
-var ErrInvalidToken = errors.New("invalid token")
 
 // TokenAuth represents a way of resolving tokens to usernames.
 type TokenAuth interface {
@@ -94,7 +97,7 @@ func (d *domainAllowList) Allow(cert *x509.Certificate) (username string, err er
 			return san, nil
 		}
 	}
-	return "", nil
+	return "", ErrNoCertMatch
 }
 
 func (d *domainAllowList) Enabled() bool {
