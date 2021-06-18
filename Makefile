@@ -3,9 +3,6 @@
 
 GOPATH = $(shell go env GOPATH)
 
-# default make shell is /bin/sh which does not support pipefail
-SHELL=/bin/bash -eo pipefail
-
 all: clean format lint compile
 
 clean:
@@ -43,8 +40,6 @@ compile-server: target
 compile-client: target
 	go build -o target/example-client ./cmd/example-client/...
 
-test-clients: run-client-tests run-curl-tests run-grpcurl-tests
-
 # ========================================================================================
 # Server variants
 # ========================================================================================
@@ -54,6 +49,8 @@ run-server: compile-server
 
 run-server-mtls: compile-server
 	./target/example-server -tokens "alice:wibble" -domains "alice.example.com"
+
+run-all-tests: run-client-tests run-curl-tests run-grpcurl-tests
 
 # ========================================================================================
 # Custom gRPC client
