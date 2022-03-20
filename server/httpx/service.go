@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -23,19 +24,12 @@ type service struct {
 	port   int
 }
 
-// NewService creates a HTTP service
+// NewService creates an HTTP service
 func NewService(ctx context.Context, impl api.ExampleServer, port int, auth server.TokenAuth, mtls server.AllowList) (server.Service, error) {
-	// use least-surprising JSON output options
-	marshaller := &runtime.JSONPb{OrigName: true, EmitDefaults: true}
-	// yes, we are matching all incoming input as JSON, but see note below
-	httpMux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaller))
-	err := api.RegisterExampleHandlerServer(ctx, httpMux, impl)
+	handler, err := httpHandler(ctx, impl)
 	if err != nil {
-		return nil, fmt.Errorf("grpc-gateway registration failed: %w", err)
+		return nil, err
 	}
-	// NOTE: grpc-gateway does not play nice with anything other than JSON request bodies but
-	// it does not check that the Content-Type is actually JSON, so let's enforce that a bit.
-	handler := handlers.ContentTypeHandler(httpMux, "application/json")
 	handler = authMiddleware(auth, handler)
 	if mtls.Enabled() {
 		handler = mtlsMiddleware(mtls, handler)
@@ -44,12 +38,8 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, auth serv
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: handler,
 	}
-	if mtls.Enabled() {
-		cfg, err := mtlsConfig()
-		if err != nil {
-			return nil, err
-		}
-		srv.TLSConfig = cfg
+	if err = mtlsConfig(srv, mtls); err != nil {
+		return nil, err
 	}
 	return &service{
 		server: srv,
@@ -58,18 +48,36 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, auth serv
 	}, nil
 }
 
-func mtlsConfig() (*tls.Config, error) {
+func httpHandler(ctx context.Context, impl api.ExampleServer) (http.Handler, error) {
+	// use least-surprising JSON output options
+	marshaller := &runtime.JSONPb{OrigName: true, EmitDefaults: true}
+	// yes, we are matching all incoming input as JSON, but see note below
+	httpMux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaller))
+	err := api.RegisterExampleHandlerServer(ctx, httpMux, impl)
+	if err != nil {
+		return nil, fmt.Errorf("grpc-gateway registration failed: %w", err)
+	}
+	// NOTE: grpc-gateway does not play nice with anything other than JSON request bodies,
+	// unless you want to do your own parsing from HttpBody instances, but it does not check
+	// that the Content-Type is actually JSON, so let's enforce that a bit.
+	return handlers.ContentTypeHandler(httpMux, "application/json"), nil
+}
+
+func mtlsConfig(srv *http.Server, mtls server.AllowList) error {
+	if !mtls.Enabled() {
+		return nil
+	}
 	caCert, err := ioutil.ReadFile("pki/ca.crt")
 	if err != nil {
-		return nil, fmt.Errorf("cannot read root CA cert: %w", err)
+		return fmt.Errorf("cannot read root CA cert: %w", err)
 	}
 	caCertPool := x509.NewCertPool()
 	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
-		return nil, fmt.Errorf("failed to add root CA cert into cert pool")
+		return fmt.Errorf("failed to add root CA cert into cert pool")
 	}
 	cert, err := tls.LoadX509KeyPair("pki/server.crt", "pki/server.key")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load cert & key files: %w", err)
+		return fmt.Errorf("failed to load cert & key files: %w", err)
 	}
 	// if we wanted to make mTLS mandatory we should
 	// set ClientAuth to tls.RequireAndVerifyClientCert
@@ -78,26 +86,30 @@ func mtlsConfig() (*tls.Config, error) {
 		ClientCAs:    caCertPool,
 		Certificates: []tls.Certificate{cert},
 	}
-	return cfg, nil
+	srv.TLSConfig = cfg
+	return nil
 }
 
 func (s *service) ListenAndServe() error {
-	log.WithField("port", s.port).Info("staring HTTP server")
+	ll := log.WithField("port", s.port)
+	var err error
 	if s.mtls {
+		ll.Info("starting HTTPS server with mTLS")
 		// cert & key files provided during mTLS setup
-		err := s.server.ListenAndServeTLS("", "")
-		if err != nil && errors.Is(err, http.ErrServerClosed) {
-			return nil
-		}
-		return err
+		err = s.server.ListenAndServeTLS("", "")
+	} else {
+		ll.Info("starting HTTPS server")
+		err = s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
 	}
-	err := s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
-	if err != nil && errors.Is(err, http.ErrServerClosed) {
+	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}
 	return err
 }
 
 func (s *service) GracefulStop() {
-	s.server.Shutdown(context.Background())
+	// let's be nice, but not too nice
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	s.server.Shutdown(ctx)
+	cancel()
 }
