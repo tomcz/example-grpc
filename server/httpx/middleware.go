@@ -47,14 +47,13 @@ func mtlsMiddleware(mtls server.AllowList, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		certs := r.TLS.PeerCertificates
 		if len(certs) > 0 {
+			// we want the first cert in the chain as that is the actual client cert
 			username, err := mtls.Allow(certs[0])
 			if err != nil {
 				authFailed(w, err)
 				return
 			}
-			if username != "" {
-				r = r.WithContext(server.WithUserName(r.Context(), username))
-			}
+			r = r.WithContext(server.WithUserName(r.Context(), username))
 		}
 		next.ServeHTTP(w, r)
 	})

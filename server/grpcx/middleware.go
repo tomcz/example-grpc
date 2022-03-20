@@ -44,13 +44,12 @@ func newMTLSAuthFunc(mtls server.AllowList, next mw.AuthFunc) mw.AuthFunc {
 			if tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo); ok {
 				certs := tlsInfo.State.PeerCertificates
 				if len(certs) > 0 {
+					// we want the first cert in the chain as that is the actual client cert
 					username, err := mtls.Allow(certs[0])
 					if err != nil {
 						return authFailed(err)
 					}
-					if username != "" {
-						return server.WithUserName(ctx, username), nil
-					}
+					return server.WithUserName(ctx, username), nil
 				}
 			}
 		}
