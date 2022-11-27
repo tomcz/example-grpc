@@ -59,11 +59,12 @@ func realMain() error {
 		defer cancel()
 		return httpSrv.ListenAndServe()
 	})
+	shutdown := func() {
+		grpcSrv.GracefulStop()
+		httpSrv.GracefulStop()
+	}
 	group.Go(func() error {
-		defer func() {
-			grpcSrv.GracefulStop()
-			httpSrv.GracefulStop()
-		}()
+		defer shutdown()
 		signalChan := make(chan os.Signal, 1)
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
