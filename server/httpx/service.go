@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -67,7 +67,7 @@ func mtlsConfig(srv *http.Server, mtls server.AllowList) error {
 	if !mtls.Enabled() {
 		return nil
 	}
-	caCert, err := ioutil.ReadFile("pki/ca.crt")
+	caCert, err := os.ReadFile("pki/ca.crt")
 	if err != nil {
 		return fmt.Errorf("cannot read root CA cert: %w", err)
 	}

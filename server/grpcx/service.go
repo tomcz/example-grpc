@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -50,7 +50,7 @@ func newTransportCredentials(allowMtls bool) (credentials.TransportCredentials, 
 }
 
 func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
-	caCert, err := ioutil.ReadFile("pki/ca.crt")
+	caCert, err := os.ReadFile("pki/ca.crt")
 	if err != nil {
 		return nil, fmt.Errorf("cannot read root CA cert: %w", err)
 	}
