@@ -9,6 +9,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/tomcz/gotools/errgroup"
+	"github.com/tomcz/gotools/quiet"
 
 	"github.com/tomcz/example-grpc/server"
 	"github.com/tomcz/example-grpc/server/echo"
@@ -50,6 +51,10 @@ func realMain() error {
 		return err
 	}
 
+	shutdown := &quiet.Closer{}
+	shutdown.AddFunc(grpcSrv.GracefulStop)
+	shutdown.AddFunc(httpSrv.GracefulStop)
+
 	group := errgroup.New()
 	group.Go(func() error {
 		defer cancel()
@@ -59,12 +64,8 @@ func realMain() error {
 		defer cancel()
 		return httpSrv.ListenAndServe()
 	})
-	shutdown := func() {
-		grpcSrv.GracefulStop()
-		httpSrv.GracefulStop()
-	}
 	group.Go(func() error {
-		defer shutdown()
+		defer shutdown.Close()
 		signalChan := make(chan os.Signal, 1)
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
