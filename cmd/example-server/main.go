@@ -65,7 +65,7 @@ func realMain() error {
 		return httpSrv.ListenAndServe()
 	})
 	group.Go(func() error {
-		defer shutdown.Close()
+		defer shutdown.CloseAll()
 		signalChan := make(chan os.Signal, 1)
 		signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 		select {
