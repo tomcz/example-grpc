@@ -8,6 +8,7 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/tomcz/gotools/quiet"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
@@ -82,5 +83,5 @@ func (s *service) ListenAndServe() error {
 }
 
 func (s *service) GracefulStop() {
-	s.server.GracefulStop()
+	quiet.CloseFunc(s.server.GracefulStop)
 }

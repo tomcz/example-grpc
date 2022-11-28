@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/tomcz/gotools/maps"
 )
 
 // ErrInvalidToken authentication failure
@@ -80,11 +82,9 @@ type domainAllowList struct {
 
 // NewDomainAllowList creates an allowed list from a comma-separated set of domains.
 func NewDomainAllowList(domains string) AllowList {
-	allowed := make(map[string]bool)
-	for _, domain := range strings.Split(domains, ",") {
-		allowed[domain] = true
+	return &domainAllowList{
+		allowed: maps.NewSet(strings.Split(domains, ",")...),
 	}
-	return &domainAllowList{allowed}
 }
 
 func (d *domainAllowList) Allow(cert *x509.Certificate) (username string, err error) {

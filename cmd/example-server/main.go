@@ -8,7 +8,7 @@ import (
 	"syscall"
 
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
+	"github.com/tomcz/gotools/errgroup"
 
 	"github.com/tomcz/example-grpc/server"
 	"github.com/tomcz/example-grpc/server/echo"
@@ -50,7 +50,7 @@ func realMain() error {
 		return err
 	}
 
-	var group errgroup.Group
+	group := errgroup.New()
 	group.Go(func() error {
 		defer cancel()
 		return grpcSrv.ListenAndServe()

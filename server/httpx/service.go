@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	log "github.com/sirupsen/logrus"
+	"github.com/tomcz/gotools/quiet"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
@@ -109,7 +110,5 @@ func (s *service) ListenAndServe() error {
 
 func (s *service) GracefulStop() {
 	// let's be nice, but not too nice
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	s.server.Shutdown(ctx)
-	cancel()
+	quiet.CloseWithTimeout(s.server.Shutdown, 100*time.Millisecond)
 }
