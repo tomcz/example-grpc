@@ -28,7 +28,7 @@ func authMiddleware(auth server.TokenAuth, next http.Handler) http.Handler {
 			http.Error(w, "Bad Authorization header", http.StatusUnauthorized)
 			return
 		}
-		if strings.EqualFold(pair[0], auth.Scheme()) {
+		if !strings.EqualFold(pair[0], auth.Scheme()) {
 			http.Error(w, "Unsupported Authorization scheme", http.StatusUnauthorized)
 			return
 		}
