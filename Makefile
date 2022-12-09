@@ -67,62 +67,78 @@ run-client-alice: compile-client
 
 .PHONY: run-client-bob
 run-client-bob: compile-client
-	./target/example-client -bob -msg "Coffee?" || true
+	-./target/example-client -bob -msg "Coffee?"
 
 .PHONY: run-client-tests
 run-client-tests: run-client run-client-alice run-client-bob
 
 # ========================================================================================
 # Plain HTTP client: curl
+# Download jq from: https://stedolan.github.io/jq/download/
 # ========================================================================================
 
 .PHONY: run-curl
 run-curl:
-	curl --silent --show-error --fail --cacert pki/ca.crt \
+	curl --silent --show-error --fail \
+		--cacert pki/ca.crt \
 		-H 'Content-Type: application/json' \
 		-H 'Authorization: Bearer wibble' \
-		-d '{"message": "hello"}' https://localhost:8080/v1/example/echo | jq '.'
+		-d '{"message": "hello"}' \
+		https://localhost:8080/v1/example/echo | jq '.'
 
 .PHONY: run-curl-alice
 run-curl-alice:
-	curl --silent --show-error --fail --cacert pki/ca.crt \
-		--key pki/alice.key --cert pki/alice.crt \
+	curl --silent --show-error --fail \
+		--cacert pki/ca.crt \
+		--cert pki/alice.crt \
+		--key pki/alice.key \
 		-H 'Content-Type: application/json' \
-		-d '{"message": "Wine?"}' https://localhost:8080/v1/example/echo | jq '.'
+		-d '{"message": "Wine?"}' \
+		https://localhost:8080/v1/example/echo | jq '.'
 
 .PHONY: run-curl-bob
 run-curl-bob:
-	curl --silent --show-error --fail --cacert pki/ca.crt \
- 		--key pki/bob.key --cert pki/bob.crt \
+	-curl --silent --show-error --fail \
+		--cacert pki/ca.crt \
+		--cert pki/bob.crt \
+ 		--key pki/bob.key \
 		-H 'Content-Type: application/json' \
-		-d '{"message": "Whiskey?"}' https://localhost:8080/v1/example/echo || true
+		-d '{"message": "Whiskey?"}' \
+		https://localhost:8080/v1/example/echo
 
 .PHONY: run-curl-tests
 run-curl-tests: run-curl run-curl-alice run-curl-bob
 
 # ========================================================================================
 # Third-party gRPC client: grpcurl
+# Download from: https://github.com/fullstorydev/grpcurl
 # ========================================================================================
 
 .PHONY: run-grpcurl
 run-grpcurl:
-	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-d '{"message":"hola"}' -H 'authorization: bearer wibble' \
+	grpcurl -servername server.example.com \
+		-cacert pki/ca.crt \
+		-H 'authorization: bearer wibble' \
+		-d '{"message":"hola"}' \
 		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-alice
 run-grpcurl-alice:
-	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-cert pki/alice.crt -key pki/alice.key \
+	grpcurl -servername server.example.com \
+		-cacert pki/ca.crt \
+		-cert pki/alice.crt \
+		-key pki/alice.key \
 		-d '{"message":"Gin?"}' \
 		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-bob
 run-grpcurl-bob:
-	grpcurl -cacert pki/ca.crt -servername server.example.com \
-		-cert pki/bob.crt -key pki/bob.key \
+	-grpcurl -servername server.example.com \
+		-cacert pki/ca.crt \
+		-cert pki/bob.crt \
+		-key pki/bob.key \
 		-d '{"message":"Vodka?"}' \
-		localhost:8000 example.service.Example/Echo || true
+		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-tests
 run-grpcurl-tests: run-grpcurl run-grpcurl-alice run-grpcurl-bob
