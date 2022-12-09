@@ -5,9 +5,13 @@ set -euxo pipefail
 
 openssl genrsa -out ca.key 2048
 
-openssl req -x509 -new -nodes \
-        -key ca.key -subj "/CN=ExampleCA/C=US/L=NY" \
-        -days 1825 -out ca.crt
+openssl req -x509 -new -nodes -sha256 \
+        -addext basicConstraints=critical,CA:TRUE,pathlen:0 \
+        -addext keyUsage=cRLSign,keyCertSign \
+        -subj "/CN=ExampleCA/C=AU/ST=NSW/L=Sydney" \
+        -key ca.key \
+        -days 1825 \
+        -out ca.crt
 
 ## Generate server TLS key & certificate
 
