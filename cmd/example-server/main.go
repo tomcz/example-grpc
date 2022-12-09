@@ -51,7 +51,7 @@ func realMain() error {
 		return err
 	}
 
-	shutdown := &quiet.Closer{}
+	shutdown := new(quiet.Closer)
 	shutdown.AddFunc(grpcSrv.GracefulStop)
 	shutdown.AddFunc(httpSrv.GracefulStop)
 
