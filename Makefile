@@ -18,6 +18,10 @@ format:
 lint:
 	golangci-lint run
 
+.PHONY: tidy
+tidy:
+	go mod tidy -compat=1.19
+
 .PHONY: genproto
 genproto:
 	protoc -Iapi/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
