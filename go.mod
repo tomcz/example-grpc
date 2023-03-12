@@ -8,7 +8,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/tomcz/gotools v0.4.0
+	github.com/tomcz/gotools v0.4.1
 	google.golang.org/genproto v0.0.0-20191223191004-3caeed10a8bf
 	google.golang.org/grpc v1.26.0
 )
