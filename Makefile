@@ -20,15 +20,30 @@ lint:
 
 .PHONY: tidy
 tidy:
-	go mod tidy -compat=1.20
+	go mod tidy -compat=1.21
+
+.local/googleapis:
+	git clone --depth=1 https://github.com/googleapis/googleapis.git .local/googleapis
+
+.local/bin/protoc:
+	mkdir .local
+	curl -L -o .local/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+	unzip .local/protoc.zip -d .local
+	chmod +x .local/bin/protoc
+	rm .local/protoc.zip
 
 .PHONY: genproto
-genproto:
-	protoc -Iapi/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-		--go_out=plugins=grpc:api \
-		api/service.proto
-	protoc -Iapi/ -I${GOPATH}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis \
-		--grpc-gateway_out=logtostderr=true:api \
+genproto: .local/bin/protoc .local/googleapis
+	go install \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway \
+		github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2 \
+		google.golang.org/protobuf/cmd/protoc-gen-go \
+		google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	.local/bin/protoc -I . \
+		--go_out . --go_opt paths=source_relative \
+		--go-grpc_out . --go-grpc_opt paths=source_relative \
+		--grpc-gateway_out . --grpc-gateway_opt paths=source_relative \
+		 -I.local/googleapis \
 		api/service.proto
 
 .PHONY: compile

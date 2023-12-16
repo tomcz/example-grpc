@@ -3,7 +3,7 @@ package grpcx
 import (
 	"context"
 
-	mw "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	mw "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

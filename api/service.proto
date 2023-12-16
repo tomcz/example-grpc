@@ -1,6 +1,6 @@
 syntax = "proto3";
 package example.service;
-option go_package = "api";
+option go_package = "github.com/tomcz/example-grpc/api";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";

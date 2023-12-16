@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/protobuf/jsonpb"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/tomcz/example-grpc/api"
 )
@@ -58,16 +58,8 @@ func realMain() error {
 	if err != nil {
 		return fmt.Errorf("echo request failed: %w", err)
 	}
-	marshaller := &jsonpb.Marshaler{
-		EmitDefaults: true,
-		OrigName:     true,
-		Indent:       "  ",
-	}
-	txt, err := marshaller.MarshalToString(res)
-	if err != nil {
-		return fmt.Errorf("response marshalling failed: %w", err)
-	}
-	fmt.Println(txt)
+
+	fmt.Println(protojson.Format(res))
 	return nil
 }
 

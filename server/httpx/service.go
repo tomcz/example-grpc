@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
 	"github.com/tomcz/gotools/quiet"
 
@@ -50,10 +50,8 @@ func NewService(ctx context.Context, impl api.ExampleServer, port int, auth serv
 }
 
 func httpHandler(ctx context.Context, impl api.ExampleServer) (http.Handler, error) {
-	// use least-surprising JSON output options
-	marshaller := &runtime.JSONPb{OrigName: true, EmitDefaults: true}
 	// yes, we are matching all incoming input as JSON, but see note below
-	httpMux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, marshaller))
+	httpMux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}))
 	err := api.RegisterExampleHandlerServer(ctx, httpMux, impl)
 	if err != nil {
 		return nil, fmt.Errorf("grpc-gateway registration failed: %w", err)

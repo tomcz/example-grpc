@@ -3,14 +3,16 @@ package echo
 import (
 	"context"
 
-	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/tomcz/example-grpc/api"
 	"github.com/tomcz/example-grpc/server"
 )
 
-type plainServer struct{}
+type plainServer struct {
+	api.UnimplementedExampleServer
+}
 
 // NewExampleServer vanilla server
 func NewExampleServer() api.ExampleServer {
@@ -21,6 +23,6 @@ func (s *plainServer) Echo(ctx context.Context, in *api.EchoRequest) (*api.EchoR
 	log.WithField("user", server.UserName(ctx)).Info(in.Message)
 	return &api.EchoResponse{
 		Message:   in.Message,
-		CreatedAt: ptypes.TimestampNow(),
+		CreatedAt: timestamppb.Now(),
 	}, nil
 }
