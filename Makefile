@@ -1,5 +1,7 @@
 GOPATH = $(shell go env GOPATH)
 
+SHELL := /bin/bash -o pipefail
+
 .PHONY: all
 all: clean format lint compile
 
@@ -22,15 +24,15 @@ lint:
 tidy:
 	go mod tidy -compat=1.21
 
-.local/googleapis:
-	git clone --depth=1 https://github.com/googleapis/googleapis.git .local/googleapis
-
 .local/bin/protoc:
 	mkdir .local
 	curl -L -o .local/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
 	unzip .local/protoc.zip -d .local
 	chmod +x .local/bin/protoc
 	rm .local/protoc.zip
+
+.local/googleapis:
+	git clone --depth=1 https://github.com/googleapis/googleapis.git .local/googleapis
 
 .PHONY: genproto
 genproto: .local/bin/protoc .local/googleapis
@@ -47,7 +49,7 @@ genproto: .local/bin/protoc .local/googleapis
 		api/service.proto
 
 .PHONY: compile
-compile: compile-server compile-client
+compile: compile-server compile-client compile-certs
 
 .PHONY: compile-server
 compile-server: target
@@ -56,6 +58,11 @@ compile-server: target
 .PHONY: compile-client
 compile-client: target
 	go build -o target/example-client ./cmd/example-client/...
+
+.PHONY: compile-certs
+compile-certs: target
+	go build -o target/example-certs ./cmd/example-certs/...
+	./target/example-certs
 
 # ========================================================================================
 # Server variants
@@ -99,31 +106,31 @@ run-client-tests: run-client run-client-alice run-client-bob
 .PHONY: run-curl
 run-curl:
 	curl --silent --show-error --fail \
-		--cacert pki/ca.crt \
+		--cacert target/ca.crt \
 		-H 'Content-Type: application/json' \
 		-H 'Authorization: Bearer wibble' \
 		-d '{"message": "hello"}' \
-		https://localhost:8080/v1/example/echo | jq '.'
+		https://localhost:8443/v1/example/echo | jq '.'
 
 .PHONY: run-curl-alice
 run-curl-alice:
 	curl --silent --show-error --fail \
-		--cacert pki/ca.crt \
-		--cert pki/alice.crt \
-		--key pki/alice.key \
+		--cacert target/ca.crt \
+		--cert target/alice.crt \
+		--key target/alice.key \
 		-H 'Content-Type: application/json' \
 		-d '{"message": "Wine?"}' \
-		https://localhost:8080/v1/example/echo | jq '.'
+		https://localhost:8443/v1/example/echo | jq '.'
 
 .PHONY: run-curl-bob
 run-curl-bob:
 	-curl --silent --show-error --fail \
-		--cacert pki/ca.crt \
-		--cert pki/bob.crt \
- 		--key pki/bob.key \
+		--cacert target/ca.crt \
+		--cert target/bob.crt \
+ 		--key target/bob.key \
 		-H 'Content-Type: application/json' \
 		-d '{"message": "Whiskey?"}' \
-		https://localhost:8080/v1/example/echo
+		https://localhost:8443/v1/example/echo
 
 .PHONY: run-curl-tests
 run-curl-tests: run-curl run-curl-alice run-curl-bob
@@ -136,7 +143,7 @@ run-curl-tests: run-curl run-curl-alice run-curl-bob
 .PHONY: run-grpcurl
 run-grpcurl:
 	grpcurl -servername server.example.com \
-		-cacert pki/ca.crt \
+		-cacert target/ca.crt \
 		-H 'authorization: bearer wibble' \
 		-d '{"message":"hola"}' \
 		localhost:8000 example.service.Example/Echo
@@ -144,18 +151,18 @@ run-grpcurl:
 .PHONY: run-grpcurl-alice
 run-grpcurl-alice:
 	grpcurl -servername server.example.com \
-		-cacert pki/ca.crt \
-		-cert pki/alice.crt \
-		-key pki/alice.key \
+		-cacert target/ca.crt \
+		-cert target/alice.crt \
+		-key target/alice.key \
 		-d '{"message":"Gin?"}' \
 		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-bob
 run-grpcurl-bob:
 	-grpcurl -servername server.example.com \
-		-cacert pki/ca.crt \
-		-cert pki/bob.crt \
-		-key pki/bob.key \
+		-cacert target/ca.crt \
+		-cert target/bob.crt \
+		-key target/bob.key \
 		-d '{"message":"Vodka?"}' \
 		localhost:8000 example.service.Example/Echo
 

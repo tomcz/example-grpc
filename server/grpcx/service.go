@@ -46,11 +46,11 @@ func newTransportCredentials(allowMtls bool) (credentials.TransportCredentials, 
 	if allowMtls {
 		return newMTLSTransportCredentials()
 	}
-	return credentials.NewServerTLSFromFile("pki/server.crt", "pki/server.key")
+	return credentials.NewServerTLSFromFile("target/server.crt", "target/server.key")
 }
 
 func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
-	caCert, err := os.ReadFile("pki/ca.crt")
+	caCert, err := os.ReadFile("target/ca.crt")
 	if err != nil {
 		return nil, fmt.Errorf("cannot read root CA cert: %w", err)
 	}
@@ -58,7 +58,7 @@ func newMTLSTransportCredentials() (credentials.TransportCredentials, error) {
 	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
 		return nil, fmt.Errorf("failed to add root CA cert into cert pool")
 	}
-	cert, err := tls.LoadX509KeyPair("pki/server.crt", "pki/server.key")
+	cert, err := tls.LoadX509KeyPair("target/server.crt", "target/server.key")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load cert & key files: %w", err)
 	}

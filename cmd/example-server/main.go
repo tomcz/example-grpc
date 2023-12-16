@@ -19,7 +19,7 @@ import (
 
 var (
 	grpcPort = flag.Int("grpc", 8000, "gRPC listener port")
-	httpPort = flag.Int("http", 8080, "HTTP listener port")
+	httpPort = flag.Int("http", 8443, "HTTP listener port")
 	tokens   = flag.String("tokens", "", "valid bearer tokens")
 	domains  = flag.String("domains", "", "valid client TLS certificate domains")
 )

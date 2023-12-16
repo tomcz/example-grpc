@@ -66,7 +66,7 @@ func mtlsConfig(srv *http.Server, mtls server.AllowList) error {
 	if !mtls.Enabled() {
 		return nil
 	}
-	caCert, err := os.ReadFile("pki/ca.crt")
+	caCert, err := os.ReadFile("target/ca.crt")
 	if err != nil {
 		return fmt.Errorf("cannot read root CA cert: %w", err)
 	}
@@ -74,7 +74,7 @@ func mtlsConfig(srv *http.Server, mtls server.AllowList) error {
 	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
 		return fmt.Errorf("failed to add root CA cert into cert pool")
 	}
-	cert, err := tls.LoadX509KeyPair("pki/server.crt", "pki/server.key")
+	cert, err := tls.LoadX509KeyPair("target/server.crt", "target/server.key")
 	if err != nil {
 		return fmt.Errorf("failed to load cert & key files: %w", err)
 	}
@@ -98,7 +98,7 @@ func (s *service) ListenAndServe() error {
 		err = s.server.ListenAndServeTLS("", "")
 	} else {
 		ll.Info("starting HTTPS server")
-		err = s.server.ListenAndServeTLS("pki/server.crt", "pki/server.key")
+		err = s.server.ListenAndServeTLS("target/server.crt", "target/server.key")
 	}
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
