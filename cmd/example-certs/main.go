@@ -22,26 +22,31 @@ func main() {
 
 func realMain() error {
 	now := time.Now()
-	ca, caPK, err := createRootCA(now)
+	ca, err := createRootCA(now)
 	if err != nil {
 		return err
 	}
-	err = createCert("server", ca, caPK, now)
+	err = ca.createCert("server", now)
 	if err != nil {
 		return err
 	}
-	err = createCert("alice", ca, caPK, now)
+	err = ca.createCert("alice", now)
 	if err != nil {
 		return err
 	}
-	err = createCert("bob", ca, caPK, now)
+	err = ca.createCert("bob", now)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func createRootCA(now time.Time) (*x509.Certificate, *rsa.PrivateKey, error) {
+type rootCA struct {
+	cert *x509.Certificate
+	key  *rsa.PrivateKey
+}
+
+func createRootCA(now time.Time) (*rootCA, error) {
 	log.Println("generating root ca")
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2023),
@@ -63,22 +68,22 @@ func createRootCA(now time.Time) (*x509.Certificate, *rsa.PrivateKey, error) {
 	}
 	privKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generate ca pk: %w", err)
+		return nil, fmt.Errorf("generate ca pk: %w", err)
 	}
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &privKey.PublicKey, privKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("generate ca cert: %w", err)
+		return nil, fmt.Errorf("generate ca cert: %w", err)
 	}
 	if err = writeCertificate(certBytes, "target/ca.crt"); err != nil {
-		return nil, nil, fmt.Errorf("write ca cert: %w", err)
+		return nil, fmt.Errorf("write ca cert: %w", err)
 	}
 	if err = writePrivateKey(privKey, "target/ca.key"); err != nil {
-		return nil, nil, fmt.Errorf("write ca key: %w", err)
+		return nil, fmt.Errorf("write ca key: %w", err)
 	}
-	return cert, privKey, nil
+	return &rootCA{cert: cert, key: privKey}, nil
 }
 
-func createCert(alias string, caCrt *x509.Certificate, caPK *rsa.PrivateKey, now time.Time) error {
+func (r *rootCA) createCert(alias string, now time.Time) error {
 	log.Printf("generating %s cert\n", alias)
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(2099),
@@ -102,7 +107,7 @@ func createCert(alias string, caCrt *x509.Certificate, caPK *rsa.PrivateKey, now
 	if err != nil {
 		return fmt.Errorf("generate %s pk: %w", alias, err)
 	}
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, caCrt, &privKey.PublicKey, caPK)
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, r.cert, &privKey.PublicKey, r.key)
 	if err != nil {
 		return fmt.Errorf("generate %s cert: %w", alias, err)
 	}
