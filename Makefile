@@ -2,6 +2,22 @@ GOPATH = $(shell go env GOPATH)
 
 SHELL := /bin/bash -o pipefail
 
+ifeq "$(shell uname -o)" "Darwin"
+ifeq "$(shell uname -m)" "x86_64"
+JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_x86_64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-x86_64.zip
+else
+JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_arm64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
+endif
+else
+JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_linux_x86_64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+endif
+
 .PHONY: all
 all: clean format lint compile
 
@@ -25,8 +41,8 @@ tidy:
 	go mod tidy -compat=1.21
 
 .local/bin/protoc:
-	mkdir .local
-	curl -L -o .local/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+	mkdir -p .local
+	curl -s -L -o .local/protoc.zip ${PROTOC_URL}
 	unzip .local/protoc.zip -d .local
 	chmod +x .local/bin/protoc
 	rm .local/protoc.zip
@@ -45,7 +61,7 @@ genproto: .local/bin/protoc .local/googleapis
 		--go_out . --go_opt paths=source_relative \
 		--go-grpc_out . --go-grpc_opt paths=source_relative \
 		--grpc-gateway_out . --grpc-gateway_opt paths=source_relative \
-		 -I.local/googleapis \
+		 -I .local/googleapis \
 		api/service.proto
 
 .PHONY: compile
@@ -70,10 +86,6 @@ compile-certs: target
 
 .PHONY: run-server
 run-server: compile-server
-	./target/example-server -tokens "alice:wibble"
-
-.PHONY: run-server-mtls
-run-server-mtls: compile-server
 	./target/example-server -tokens "alice:wibble" -domains "alice.example.com"
 
 .PHONY: run-all-tests
@@ -100,27 +112,31 @@ run-client-tests: run-client run-client-alice run-client-bob
 
 # ========================================================================================
 # Plain HTTP client: curl
-# Download jq from: https://stedolan.github.io/jq/download/
 # ========================================================================================
 
+.local/bin/jq:
+	mkdir -p .local/bin
+	curl -s -L -o .local/bin/jq ${JQ_URL}
+	chmod +x .local/bin/jq
+
 .PHONY: run-curl
-run-curl:
+run-curl: .local/bin/jq
 	curl --silent --show-error --fail \
 		--cacert target/ca.crt \
 		-H 'Content-Type: application/json' \
 		-H 'Authorization: Bearer wibble' \
 		-d '{"message": "hello"}' \
-		https://localhost:8443/v1/example/echo | jq '.'
+		https://localhost:8443/v1/example/echo | .local/bin/jq '.'
 
 .PHONY: run-curl-alice
-run-curl-alice:
+run-curl-alice: .local/bin/jq
 	curl --silent --show-error --fail \
 		--cacert target/ca.crt \
 		--cert target/alice.crt \
 		--key target/alice.key \
 		-H 'Content-Type: application/json' \
 		-d '{"message": "Wine?"}' \
-		https://localhost:8443/v1/example/echo | jq '.'
+		https://localhost:8443/v1/example/echo | .local/bin/jq '.'
 
 .PHONY: run-curl-bob
 run-curl-bob:
@@ -137,20 +153,26 @@ run-curl-tests: run-curl run-curl-alice run-curl-bob
 
 # ========================================================================================
 # Third-party gRPC client: grpcurl
-# Download from: https://github.com/fullstorydev/grpcurl
 # ========================================================================================
 
+.local/bin/grpcurl:
+	mkdir -p .local/bin
+	curl -s -L -o .local/grpcurl.tar.gz ${GRPCURL_URL}
+	tar -xzf .local/grpcurl.tar.gz -C .local/bin
+	chmod +x .local/bin/grpcurl
+	rm .local/grpcurl.tar.gz
+
 .PHONY: run-grpcurl
-run-grpcurl:
-	grpcurl -servername server.example.com \
+run-grpcurl: .local/bin/grpcurl
+	.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-H 'authorization: bearer wibble' \
 		-d '{"message":"hola"}' \
 		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-alice
-run-grpcurl-alice:
-	grpcurl -servername server.example.com \
+run-grpcurl-alice: .local/bin/grpcurl
+	.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-cert target/alice.crt \
 		-key target/alice.key \
@@ -158,8 +180,8 @@ run-grpcurl-alice:
 		localhost:8000 example.service.Example/Echo
 
 .PHONY: run-grpcurl-bob
-run-grpcurl-bob:
-	-grpcurl -servername server.example.com \
+run-grpcurl-bob: .local/bin/grpcurl
+	-.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-cert target/bob.crt \
 		-key target/bob.key \
