@@ -95,8 +95,8 @@ target/example-certs: target
 
 .PHONY: run-server
 run-server: target/example-server target/example-certs
-	./target/example-certs
-	./target/example-server -tokens "alice:wibble" -domains "alice.example.com"
+	target/example-certs
+	target/example-server -tokens "alice:wibble" -domains "alice.example.com"
 
 .PHONY: run-all-tests
 run-all-tests: run-client-tests run-curl-tests run-grpcurl-tests
@@ -107,15 +107,18 @@ run-all-tests: run-client-tests run-curl-tests run-grpcurl-tests
 
 .PHONY: run-client
 run-client: target/example-client
-	./target/example-client -token wibble -msg "G'day"
+	@echo "===> Expect success ..."
+	target/example-client -token wibble -msg "G'day"
 
 .PHONY: run-client-alice
 run-client-alice: target/example-client
-	./target/example-client -alice -msg "Tea?"
+	@echo "===> Expect success ..."
+	target/example-client -alice -msg "Tea?"
 
 .PHONY: run-client-bob
 run-client-bob: target/example-client
-	-./target/example-client -bob -msg "Coffee?"
+	@echo "===> Expect failure ..."
+	-target/example-client -bob -msg "Coffee?"
 
 .PHONY: run-client-tests
 run-client-tests: run-client run-client-alice run-client-bob
@@ -131,6 +134,7 @@ run-client-tests: run-client run-client-alice run-client-bob
 
 .PHONY: run-curl
 run-curl: .local/bin/jq
+	@echo "===> Expect success ..."
 	curl --silent --show-error --fail \
 		--cacert target/ca.crt \
 		-H 'Content-Type: application/json' \
@@ -140,6 +144,7 @@ run-curl: .local/bin/jq
 
 .PHONY: run-curl-alice
 run-curl-alice: .local/bin/jq
+	@echo "===> Expect success ..."
 	curl --silent --show-error --fail \
 		--cacert target/ca.crt \
 		--cert target/alice.crt \
@@ -150,10 +155,11 @@ run-curl-alice: .local/bin/jq
 
 .PHONY: run-curl-bob
 run-curl-bob:
+	@echo "===> Expect failure ..."
 	-curl --silent --show-error --fail \
 		--cacert target/ca.crt \
 		--cert target/bob.crt \
- 		--key target/bob.key \
+		--key target/bob.key \
 		-H 'Content-Type: application/json' \
 		-d '{"message": "Whiskey?"}' \
 		https://localhost:8443/v1/example/echo
@@ -174,6 +180,7 @@ run-curl-tests: run-curl run-curl-alice run-curl-bob
 
 .PHONY: run-grpcurl
 run-grpcurl: .local/bin/grpcurl
+	@echo "===> Expect success ..."
 	.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-H 'authorization: bearer wibble' \
@@ -182,6 +189,7 @@ run-grpcurl: .local/bin/grpcurl
 
 .PHONY: run-grpcurl-alice
 run-grpcurl-alice: .local/bin/grpcurl
+	@echo "===> Expect success ..."
 	.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-cert target/alice.crt \
@@ -191,6 +199,7 @@ run-grpcurl-alice: .local/bin/grpcurl
 
 .PHONY: run-grpcurl-bob
 run-grpcurl-bob: .local/bin/grpcurl
+	@echo "===> Expect failure ..."
 	-.local/bin/grpcurl -servername server.example.com \
 		-cacert target/ca.crt \
 		-cert target/bob.crt \
