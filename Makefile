@@ -7,15 +7,18 @@ ifeq "$(shell uname -m)" "x86_64"
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
 GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_x86_64.tar.gz
 PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-x86_64.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz
 else
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
 GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_arm64.tar.gz
 PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz
 endif
 else
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
 GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_linux_x86_64.tar.gz
 PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-linux-amd64.tar.gz
 endif
 
 .PHONY: all
@@ -30,11 +33,21 @@ target:
 
 .PHONY: format
 format:
+ifeq ($(shell which goimports),)
+	go install golang.org/x/tools/cmd/goimports
+endif
 	goimports -w -local github.com/tomcz/example-grpc .
 
+.local/bin/golangci-lint:
+	mkdir -p .local
+	curl -s -L -o .local/golangci.tar.gz ${LINT_URL}
+	tar -xzf .local/golangci.tar.gz --strip-components=1 -C .local/bin
+	chmod +x .local/bin/golangci-lint
+	rm .local/golangci.tar.gz
+
 .PHONY: lint
-lint:
-	golangci-lint run
+lint: .local/bin/golangci-lint
+	.local/bin/golangci-lint run
 
 .PHONY: tidy
 tidy:
@@ -65,27 +78,24 @@ genproto: .local/bin/protoc .local/googleapis
 		api/service.proto
 
 .PHONY: compile
-compile: compile-server compile-client compile-certs
+compile: target/example-server target/example-client target/example-certs
 
-.PHONY: compile-server
-compile-server: target
+target/example-server: target
 	go build -o target/example-server ./cmd/example-server/...
 
-.PHONY: compile-client
-compile-client: target
+target/example-client: target
 	go build -o target/example-client ./cmd/example-client/...
 
-.PHONY: compile-certs
-compile-certs: target
+target/example-certs: target
 	go build -o target/example-certs ./cmd/example-certs/...
-	./target/example-certs
 
 # ========================================================================================
-# Server variants
+# Server and tests
 # ========================================================================================
 
 .PHONY: run-server
-run-server: compile-server
+run-server: target/example-server target/example-certs
+	./target/example-certs
 	./target/example-server -tokens "alice:wibble" -domains "alice.example.com"
 
 .PHONY: run-all-tests
@@ -96,15 +106,15 @@ run-all-tests: run-client-tests run-curl-tests run-grpcurl-tests
 # ========================================================================================
 
 .PHONY: run-client
-run-client: compile-client
+run-client: target/example-client
 	./target/example-client -token wibble -msg "G'day"
 
 .PHONY: run-client-alice
-run-client-alice: compile-client
+run-client-alice: target/example-client
 	./target/example-client -alice -msg "Tea?"
 
 .PHONY: run-client-bob
-run-client-bob: compile-client
+run-client-bob: target/example-client
 	-./target/example-client -bob -msg "Coffee?"
 
 .PHONY: run-client-tests
