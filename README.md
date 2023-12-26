@@ -9,11 +9,9 @@ Example of an authenticated gRPC & grpc-gateway HTTP server, and various client 
 
 ## Running the server
 
-All the following `make` targets run a gRPC server on port 8000, and a HTTP server on port 8080, both backed by the same ExampleServer instance. Access to both APIs is protected by bearer token authentication, and optionally by mTLS authentication.
-
-1. `make run-server` uses service tokens for HTTP & gRPC authentication.
-
-2. `make run-server-mtls` enables mTLS authentication for both HTTP & gRPC APIs.
+```
+make run-server
+```
 
 ## Running the clients
 
