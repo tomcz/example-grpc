@@ -39,7 +39,7 @@ endif
 	goimports -w -local github.com/tomcz/example-grpc .
 
 .local/bin/golangci-lint:
-	mkdir -p .local
+	mkdir -p .local/bin
 	curl -s -L -o .local/golangci.tar.gz ${LINT_URL}
 	tar -xzf .local/golangci.tar.gz --strip-components=1 -C .local/bin
 	chmod +x .local/bin/golangci-lint
@@ -54,7 +54,7 @@ tidy:
 	go mod tidy -compat=1.21
 
 .local/bin/protoc:
-	mkdir -p .local
+	mkdir -p .local/bin
 	curl -s -L -o .local/protoc.zip ${PROTOC_URL}
 	unzip .local/protoc.zip -d .local
 	chmod +x .local/bin/protoc
