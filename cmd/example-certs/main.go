@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -14,7 +16,10 @@ import (
 	"time"
 )
 
+var useElliptic bool
+
 func main() {
+	useElliptic = os.Getenv("USE_EC_KEYS") == "yes"
 	if err := realMain(); err != nil {
 		log.Fatalln(err)
 	}
@@ -43,7 +48,7 @@ func realMain() error {
 
 type rootCA struct {
 	cert *x509.Certificate
-	key  *rsa.PrivateKey
+	key  any
 }
 
 func createRootCA(now time.Time) (*rootCA, error) {
@@ -66,11 +71,11 @@ func createRootCA(now time.Time) (*rootCA, error) {
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
-	privKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	privKey, err := newPrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("generate ca pk: %w", err)
 	}
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, &privKey.PublicKey, privKey)
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, cert, publicKeyFor(privKey), privKey)
 	if err != nil {
 		return nil, fmt.Errorf("generate ca cert: %w", err)
 	}
@@ -103,11 +108,11 @@ func (r *rootCA) createCert(alias string, now time.Time) error {
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:    x509.KeyUsageDigitalSignature,
 	}
-	privKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	privKey, err := newPrivateKey()
 	if err != nil {
 		return fmt.Errorf("generate %s pk: %w", alias, err)
 	}
-	certBytes, err := x509.CreateCertificate(rand.Reader, cert, r.cert, &privKey.PublicKey, r.key)
+	certBytes, err := x509.CreateCertificate(rand.Reader, cert, r.cert, publicKeyFor(privKey), r.key)
 	if err != nil {
 		return fmt.Errorf("generate %s cert: %w", alias, err)
 	}
@@ -118,6 +123,24 @@ func (r *rootCA) createCert(alias string, now time.Time) error {
 		return fmt.Errorf("write %s key: %w", alias, err)
 	}
 	return nil
+}
+
+func newPrivateKey() (any, error) {
+	if useElliptic {
+		priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		return priv, err
+	}
+	priv, err := rsa.GenerateKey(rand.Reader, 4096)
+	return priv, err
+}
+
+func publicKeyFor(privKey any) any {
+	if useElliptic {
+		pk := privKey.(*ecdsa.PrivateKey)
+		return &pk.PublicKey
+	}
+	pk := privKey.(*rsa.PrivateKey)
+	return &pk.PublicKey
 }
 
 func writeCertificate(certBytes []byte, outfile string) error {
@@ -133,15 +156,28 @@ func writeCertificate(certBytes []byte, outfile string) error {
 	})
 }
 
-func writePrivateKey(pk *rsa.PrivateKey, outfile string) error {
+func writePrivateKey(privKey any, outfile string) error {
 	fp, err := os.Create(outfile)
 	if err != nil {
 		return err
 	}
 	defer fp.Close()
 
+	if !useElliptic {
+		pk := privKey.(*rsa.PrivateKey)
+		return pem.Encode(fp, &pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: x509.MarshalPKCS1PrivateKey(pk),
+		})
+	}
+
+	pk := privKey.(*ecdsa.PrivateKey)
+	buf, err := x509.MarshalECPrivateKey(pk)
+	if err != nil {
+		return err
+	}
 	return pem.Encode(fp, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(pk),
+		Type:  "EC PRIVATE KEY",
+		Bytes: buf,
 	})
 }
