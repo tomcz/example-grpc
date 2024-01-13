@@ -7,7 +7,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.0.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/tomcz/gotools v0.6.0
+	github.com/tomcz/gotools v0.7.0
 	golang.org/x/tools v0.16.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0
 	google.golang.org/grpc v1.60.1
