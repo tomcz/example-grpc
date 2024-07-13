@@ -67,7 +67,6 @@ func createRootCA(now time.Time) (*rootCA, error) {
 		NotBefore:             now,
 		NotAfter:              now.AddDate(10, 0, 0),
 		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
