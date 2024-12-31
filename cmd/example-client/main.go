@@ -41,7 +41,7 @@ func realMain() error {
 		return err
 	}
 
-	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(tc))
+	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(tc))
 	if err != nil {
 		return fmt.Errorf("failed to dial: %w", err)
 	}

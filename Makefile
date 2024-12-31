@@ -5,20 +5,20 @@ SHELL := /bin/bash -o pipefail
 ifeq "$(shell uname -o)" "Darwin"
 ifeq "$(shell uname -m)" "x86_64"
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64
-GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_x86_64.tar.gz
-PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-x86_64.zip
-LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-amd64.tar.gz
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.9.2/grpcurl_1.9.2_osx_x86_64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protoc-29.2-osx-x86_64.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.62.2/golangci-lint-1.62.2-darwin-amd64.tar.gz
 else
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64
-GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_osx_arm64.tar.gz
-PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-osx-universal_binary.zip
-LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-darwin-arm64.tar.gz
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.9.2/grpcurl_1.9.2_osx_arm64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protoc-29.2-osx-universal_binary.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.62.2/golangci-lint-1.62.2-darwin-arm64.tar.gz
 endif
 else
 JQ_URL := https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64
-GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.8.9/grpcurl_1.8.9_linux_x86_64.tar.gz
-PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v25.1/protoc-25.1-linux-x86_64.zip
-LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.55.2/golangci-lint-1.55.2-linux-amd64.tar.gz
+GRPCURL_URL := https://github.com/fullstorydev/grpcurl/releases/download/v1.9.2/grpcurl_1.9.2_linux_x86_64.tar.gz
+PROTOC_URL := https://github.com/protocolbuffers/protobuf/releases/download/v29.2/protoc-29.2-linux-x86_64.zip
+LINT_URL := https://github.com/golangci/golangci-lint/releases/download/v1.62.2/golangci-lint-1.62.2-linux-amd64.tar.gz
 endif
 
 .PHONY: all
@@ -47,7 +47,7 @@ endif
 
 .PHONY: lint
 lint: .local/bin/golangci-lint
-	.local/bin/golangci-lint run
+	.local/bin/golangci-lint run --timeout 10m
 
 .PHONY: tidy
 tidy:
