@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tomcz/gotools/maps"
+	"github.com/tomcz/gotools/maps/sets"
 )
 
 // ErrInvalidToken authentication failure
@@ -41,9 +41,7 @@ type TokenAuth interface {
 	Scheme() string
 }
 
-type bearerAuth struct {
-	tokens map[string]string
-}
+type bearerAuth map[string]string
 
 // NewBearerAuth represents bearer token authentication.
 func NewBearerAuth(tokens string) TokenAuth {
@@ -54,17 +52,15 @@ func NewBearerAuth(tokens string) TokenAuth {
 			tokenMap[pair[1]] = pair[0]
 		}
 	}
-	return &bearerAuth{
-		tokens: tokenMap,
-	}
+	return bearerAuth(tokenMap)
 }
 
-func (b *bearerAuth) Scheme() string {
+func (b bearerAuth) Scheme() string {
 	return "bearer"
 }
 
-func (b *bearerAuth) Authenticate(token string) (string, error) {
-	if username, ok := b.tokens[token]; ok {
+func (b bearerAuth) Authenticate(token string) (string, error) {
+	if username, ok := b[token]; ok {
 		return username, nil
 	}
 	return "", ErrInvalidToken
@@ -76,31 +72,28 @@ type AllowList interface {
 	Enabled() bool
 }
 
-type domainAllowList struct {
-	allowed map[string]bool
-}
+type domainAllowList map[string]bool
 
 // NewDomainAllowList creates an allowed list from a comma-separated set of domains.
-func NewDomainAllowList(domains string) AllowList {
-	return &domainAllowList{
-		allowed: maps.NewSet(strings.Split(domains, ",")...),
-	}
+func NewDomainAllowList(domainsCSV string) AllowList {
+	domains := strings.Split(domainsCSV, ",")
+	return domainAllowList(sets.NewSet(domains...))
 }
 
-func (d *domainAllowList) Allow(cert *x509.Certificate) (username string, err error) {
+func (d domainAllowList) Allow(cert *x509.Certificate) (username string, err error) {
 	// MAYBE: fail if the certificate has been revoked by the issuer
 	cn := cert.Subject.CommonName
-	if d.allowed[cn] {
+	if sets.Contains(d, cn) {
 		return cn, nil
 	}
 	for _, san := range cert.DNSNames {
-		if d.allowed[san] {
+		if sets.Contains(d, san) {
 			return san, nil
 		}
 	}
 	return "", fmt.Errorf("%w - CN: %s", ErrNoCertMatch, cn)
 }
 
-func (d *domainAllowList) Enabled() bool {
-	return len(d.allowed) != 0
+func (d domainAllowList) Enabled() bool {
+	return len(d) != 0
 }
